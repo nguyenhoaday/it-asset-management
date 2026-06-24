@@ -74,6 +74,8 @@ jobs:
           JWT_SECRET: "test_secret_key_1234567890"
           JWT_EXPIRATION_MS: 900000
           JWT_REFRESH_EXPIRATION_MS: 604800000
+          SPRING_SQL_INIT_MODE: always
+          SPRING_SQL_INIT_SCHEMA_LOCATIONS: classpath:db/init_schema.sql
 
   security-scan:
     name: Security Scans (Trivy and Semgrep)

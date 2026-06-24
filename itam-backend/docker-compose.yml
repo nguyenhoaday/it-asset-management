@@ -3,6 +3,12 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: itam_postgres
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -17,12 +23,18 @@ services:
   redis:
     image: redis:7-alpine
     container_name: itam_redis
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     ports:
       - "6379:6379"
     volumes:
       - redisdata:/data
     command: redis-server --appendonly yes
     restart: unless-stopped
+
 
 volumes:
   pgdata:
