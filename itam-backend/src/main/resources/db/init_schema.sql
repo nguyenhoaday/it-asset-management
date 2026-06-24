@@ -308,12 +308,13 @@ GROUP BY sl.id;
 
 -- FUNCTIONS & TRIGGERS
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS '
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+' LANGUAGE plpgsql;
+
 
 CREATE TRIGGER trg_departments_updated_at BEFORE UPDATE ON departments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -331,7 +332,7 @@ CREATE TRIGGER trg_software_licenses_updated_at BEFORE UPDATE ON software_licens
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE OR REPLACE FUNCTION check_license_overallocation()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS '
 DECLARE
     used_seats INTEGER;
     max_seats  INTEGER;
@@ -346,12 +347,12 @@ BEGIN
     WHERE license_id = NEW.license_id AND returned_at IS NULL;
 
     IF (used_seats + 1) > max_seats THEN
-        RAISE EXCEPTION 'License % has only % seats, % already in use', NEW.license_id, max_seats, used_seats;
+        RAISE EXCEPTION ''License % has only % seats, % already in use'', NEW.license_id, max_seats, used_seats;
     END IF;
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+' LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_check_license_before_insert
     BEFORE INSERT ON license_allocations
