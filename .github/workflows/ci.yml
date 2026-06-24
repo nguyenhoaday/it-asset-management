@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'itam-backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'itam-backend/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  build-and-test:
+    name: Build and Test Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: itam_user
+          POSTGRES_PASSWORD: itam@161989
+          POSTGRES_DB: itam_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+        working-directory: itam-backend
+
+      - name: Run Maven Tests
+        run: ./mvnw clean test
+        working-directory: itam-backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/itam_db
+          SPRING_DATASOURCE_USERNAME: itam_user
+          SPRING_DATASOURCE_PASSWORD: itam@161989
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+          SPRING_MAIL_HOST: localhost
+          SPRING_MAIL_PORT: 1025
+          SPRING_MAIL_USERNAME: test-system@itam.com
+          SPRING_MAIL_PASSWORD: testpassword
+          SPRING_MAIL_FROM_NAME: "Hệ thống ITAM"
+          JWT_SECRET: "test_secret_key_1234567890"
+          JWT_EXPIRATION_MS: 900000
+          JWT_REFRESH_EXPIRATION_MS: 604800000
+
+  security-scan:
+    name: Security Scans (Trivy and Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: 'itam-backend'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          format: 'table'
+
+      - name: Run Semgrep Scanner
+        run: |
+          pip install semgrep
+          semgrep --config=auto --error --exclude="itam-backend/target" .
+
+  docker-validation:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test Docker Build
+        run: docker build -t itam-backend ./itam-backend
