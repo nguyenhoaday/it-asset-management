@@ -1,0 +1,192 @@
+package com.nguyenhoa.itam.allocation.application.service;
+
+import com.nguyenhoa.itam.allocation.application.dto.AllocationRequest;
+import com.nguyenhoa.itam.allocation.application.dto.AllocationResponse;
+import com.nguyenhoa.itam.allocation.application.dto.MyAssetResponse;
+import com.nguyenhoa.itam.allocation.application.dto.TransferRequest;
+import com.nguyenhoa.itam.allocation.domain.ActionType;
+import com.nguyenhoa.itam.allocation.domain.Allocation;
+import com.nguyenhoa.itam.allocation.domain.AllocationRepository;
+import com.nguyenhoa.itam.allocation.domain.ConfirmationStatus;
+import com.nguyenhoa.itam.asset.application.service.AssetService;
+import com.nguyenhoa.itam.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+public class AllocationService {
+    private final AllocationRepository allocationRepository;
+    private final AssetService assetService;
+
+    public AllocationService(AllocationRepository allocationRepository, AssetService assetService) {
+        this.allocationRepository = allocationRepository;
+        this.assetService = assetService;
+    }
+
+    @Transactional
+    public AllocationResponse assignAsset(AllocationRequest request, UUID createdBy) {
+        UUID assetId = request.getAssetId();
+
+        if (assetService.isAssetInMaintenance(assetId)) {
+            throw new BusinessException("ASSET_IN_MAINTENANCE",
+                    "Thiết bị đang trong quá trình bảo trì, không thể cấp phát", HttpStatus.CONFLICT);
+        }
+
+        if (!assetService.isAssetAvailable(assetId)) {
+            throw new BusinessException("ASSET_NOT_AVAILABLE",
+                    "Thiết bị không ở trạng thái sẵn sàng để cấp phát", HttpStatus.CONFLICT);
+        }
+
+        Allocation allocation = new Allocation();
+        allocation.setAsset(request.getAssetId());
+        allocation.setToUser(request.getToUserId());
+        allocation.setActionType(ActionType.ASSIGN);
+        allocation.setConfirmationStatus(ConfirmationStatus.PENDING);
+        allocation.setNotes(request.getNotes());
+        allocation.setCreatedBy(createdBy);
+
+        Allocation savedAllocation = allocationRepository.save(allocation);
+        assetService.markAssetAsPending(request.getAssetId());
+
+        return mapToResponse(savedAllocation);
+    }
+
+    @Transactional
+    public AllocationResponse returnAsset(UUID assetId, String notes, UUID createdBy) {
+        UUID fromUserId = assetService.getAssetCurrentHolderId(assetId);
+
+        Allocation allocation = new Allocation();
+        allocation.setAsset(assetId);
+        allocation.setFromUser(fromUserId);
+        allocation.setActionType(ActionType.RETURN);
+        allocation.setConfirmationStatus(ConfirmationStatus.CONFIRMED);
+        allocation.setConfirmedAt(Instant.now());
+        allocation.setConfirmedBy(createdBy);
+        allocation.setNotes(notes);
+        allocation.setCreatedBy(createdBy);
+
+        Allocation savedAllocation = allocationRepository.save(allocation);
+        assetService.markAssetAsAvailable(assetId);
+
+        return mapToResponse(savedAllocation);
+    }
+
+    @Transactional
+    public AllocationResponse transferAsset(TransferRequest request, UUID createdBy) {
+        UUID assetId = request.getAssetId();
+        if (assetService.isAssetInMaintenance(assetId)) {
+            throw new BusinessException("ASSET_IN_MAINTENANCE",
+                    "Thiết bị đang trong quá trình bảo trì, không thể điều chuyển", HttpStatus.CONFLICT);
+        }
+        if (!assetService.isAssetAssigned(assetId)) {
+            throw new BusinessException("ASSET_NOT_ASSIGNED",
+                    "Thiết bị phải đang được nhân viên sử dụng mới có thể điều chuyển", HttpStatus.CONFLICT);
+        }
+
+        UUID fromUserId = assetService.getAssetCurrentHolderId(request.getAssetId());
+        if (fromUserId == null) {
+            throw new BusinessException("HOLDER_NOT_FOUND", "Không tìm thấy nhân viên đang nắm giữ thiết bị", HttpStatus.NOT_FOUND);
+        }
+
+        Allocation allocation = new Allocation();
+        allocation.setAsset(request.getAssetId());
+        allocation.setFromUser(fromUserId);
+        allocation.setToUser(request.getToUserId());
+        allocation.setActionType(ActionType.TRANSFER);
+        allocation.setConfirmationStatus(ConfirmationStatus.PENDING);
+        allocation.setNotes(request.getNotes());
+        allocation.setCreatedBy(createdBy);
+
+        Allocation savedAllocation = allocationRepository.save(allocation);
+        assetService.markAssetAsPending(request.getAssetId());
+
+        return mapToResponse(savedAllocation);
+    }
+
+    @Transactional
+    public void confirmAllocation(UUID allocationId, UUID userId) {
+        Allocation allocation = allocationRepository.findById(allocationId).orElseThrow(() ->
+                new BusinessException("RESOURCE_NOT_FOUND", "Không tìm thấy yêu cầu bàn giao", HttpStatus.NOT_FOUND)
+        );
+
+        if (allocation.getConfirmationStatus() != ConfirmationStatus.PENDING) {
+            throw new BusinessException("INVALID_STATUS", "Yêu cầu bàn giao thiết bị này không ở trạng thái chờ xác nhận", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!userId.equals(allocation.getToUser())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền xác nhận yêu cầu bàn giao này", HttpStatus.FORBIDDEN);
+        }
+
+        allocation.setConfirmationStatus(ConfirmationStatus.CONFIRMED);
+        allocation.setConfirmedAt(Instant.now());
+        allocation.setConfirmedBy(userId);
+
+        allocationRepository.save(allocation);
+        assetService.markAssetAsAssigned(allocation.getAsset());
+    }
+
+    @Transactional
+    public void rejectAllocation(UUID allocationId, UUID userId) {
+        Allocation allocation = allocationRepository.findById(allocationId).orElseThrow(() ->
+                new BusinessException("RESOURCE_NOT_FOUND", "Không tìm thấy yêu cầu bàn giao", HttpStatus.NOT_FOUND)
+        );
+
+        if (allocation.getConfirmationStatus() != ConfirmationStatus.PENDING) {
+            throw new BusinessException("INVALID_STATUS", "Yêu cầu bàn giao thiết bị này không ở trạng thái chờ xác nhận", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!userId.equals(allocation.getToUser())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền từ chối yêu cầu bàn giao này", HttpStatus.FORBIDDEN);
+        }
+
+        allocation.setConfirmationStatus(ConfirmationStatus.REJECTED);
+
+        allocationRepository.save(allocation);
+
+        // Phục hồi trạng thái cũ của thiết bị qua AssetService
+        if (allocation.getActionType() == ActionType.ASSIGN) {
+            assetService.markAssetAsAvailable(allocation.getAsset());
+        } else if (allocation.getActionType() == ActionType.TRANSFER) {
+            assetService.markAssetAsAssigned(allocation.getAsset());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyAssetResponse> getMyAssets(UUID userId) {
+        return assetService.getMyAssets(userId).stream()
+                .map(holder -> new MyAssetResponse(holder.getAssetId(),
+                        holder.getAssetCode(),
+                        holder.getName(),
+                        holder.getAssignedAt(),
+                        holder.getConfirmationStatus(),
+                        holder.getNotes())
+                ).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AllocationResponse> getAssetHistory(UUID assetId) {
+        return allocationRepository.findByAssetOrderByEventTimeDesc(assetId).stream()
+                .map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    private AllocationResponse mapToResponse(Allocation allocation) {
+        return new AllocationResponse(
+                allocation.getId(),
+                allocation.getAsset(),
+                allocation.getFromUser(),
+                allocation.getToUser(),
+                allocation.getActionType(),
+                allocation.getEventTime(),
+                allocation.getConfirmationStatus(),
+                allocation.getConfirmedAt(),
+                allocation.getNotes(),
+                allocation.getHandoverDocUrl()
+        );
+    }
+}

@@ -1,0 +1,48 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: itam-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/itam_db}
+    username: ${SPRING_DATASOURCE_USERNAME:itam_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:tai-khoan-cua-ban@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:mat-khau-ung-dung}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+jwt:
+  secret: "${JWT_SECRET:jws_secret_key}"
+  expiration-ms: ${JWT_EXPIRATION_MS:900000} # 15m default
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7d default
+
+app:
+  mail:
+    from-email: ${SPRING_MAIL_USERNAME:tai-khoan-cua-ban@gmail.com}
+    from-name: ${SPRING_MAIL_FROM_NAME:Hệ thống ITAM}
