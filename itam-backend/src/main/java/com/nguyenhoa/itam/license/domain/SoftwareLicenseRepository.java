@@ -17,8 +17,8 @@ public interface SoftwareLicenseRepository extends JpaRepository<SoftwareLicense
     @Query("""
         SELECT sl FROM SoftwareLicense sl
         WHERE sl.isActive = true
-        AND (:search IS NULL OR LOWER(sl.name) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(sl.licenseCode) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND (CAST(:search AS string) IS NULL OR LOWER(sl.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+            OR LOWER(sl.licenseCode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
     """)
     Page<SoftwareLicense> searchLicense(@Param("search") String search, Pageable pageable);
 }

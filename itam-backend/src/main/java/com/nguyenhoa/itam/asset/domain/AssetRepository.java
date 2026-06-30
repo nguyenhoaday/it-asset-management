@@ -26,9 +26,9 @@ public interface AssetRepository extends JpaRepository<Asset, UUID> {
         WHERE a.deletedAt IS NULL
         AND (:categoryId IS NULL OR a.category.id = :categoryId)
         AND (:status IS NULL OR a.status = :status)
-        AND (:search IS NULL OR LOWER(a.name) LIKE LOWER(CONCAT('%', :search, '%'))
-        OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :search, '%'))
-        OR LOWER(a.serialNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND (CAST(:search AS string) IS NULL OR LOWER(a.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+        OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+        OR LOWER(a.serialNumber) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
     """)
     Page<Asset> searchAssets(@Param("categoryId") UUID categoryId, @Param("status") AssetStatus status, @Param("search") String search, Pageable pageable);
 
