@@ -5,6 +5,8 @@ import com.nguyenhoa.itam.iam.application.dto.UserProfileResponse;
 import com.nguyenhoa.itam.iam.domain.Role;
 import com.nguyenhoa.itam.iam.domain.User;
 import com.nguyenhoa.itam.iam.domain.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,5 +35,10 @@ public class UserService {
     public List<String> getITStaffEmail() {
         List<User> users = userRepository.findByRoleIn(List.of(Role.SUPER_ADMIN, Role.IT_STAFF));
         return users.stream().map(User::getEmail).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserProfileResponse> getAllUsers(String search, Pageable pageable) {
+        return userRepository.searchUserProfiles(search, pageable);
     }
 }
