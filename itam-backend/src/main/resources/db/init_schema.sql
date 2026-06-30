@@ -69,6 +69,7 @@ CREATE TABLE assets
     serial_number        VARCHAR(100) UNIQUE,
     purchase_date        DATE,
     purchase_cost        DECIMAL(15,2),
+    currency             VARCHAR(3) NOT NULL DEFAULT 'VND',
     purchase_invoice_url VARCHAR(255),
     warranty_expiry      DATE,
     status               VARCHAR(50) NOT NULL DEFAULT 'AVAILABLE'

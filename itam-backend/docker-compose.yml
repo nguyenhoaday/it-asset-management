@@ -20,6 +20,8 @@ services:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./src/main/resources/db/init_schema.sql:/docker-entrypoint-initdb.d/1_init_schema.sql:ro
+      - ./src/main/resources/db/seed_data.sql:/docker-entrypoint-initdb.d/2_seed_data.sql:ro
     restart: unless-stopped
     # Kiểm tra DB đã sẵn sàng chưa
     healthcheck:

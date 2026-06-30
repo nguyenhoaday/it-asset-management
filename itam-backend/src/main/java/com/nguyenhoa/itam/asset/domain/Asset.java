@@ -49,6 +49,12 @@ public class Asset {
     @Column(name = "purchase_cost", precision = 15, scale = 2)
     private BigDecimal purchaseCost;
 
+    @Size(max = 3)
+    @NotNull
+    @ColumnDefault("'VND'")
+    @Column(name = "currency", nullable = false, length = 3)
+    private String currency;
+
     @Size(max = 255)
     @Column(name = "purchase_invoice_url")
     private String purchaseInvoiceUrl;
@@ -200,6 +206,14 @@ public class Asset {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
 }

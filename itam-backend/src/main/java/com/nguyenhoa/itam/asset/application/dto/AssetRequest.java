@@ -23,6 +23,10 @@ public class AssetRequest {
 
     private LocalDate purchaseDate;
     private BigDecimal purchaseCost;
+    
+    @Size(max = 3, message = "Mã tiền tệ không được vượt quá 3 ký tự")
+    private String currency;
+
     private String purchaseInvoiceUrl;
     private LocalDate warrantyExpiry;
     private AssetStatus status;
@@ -98,5 +102,13 @@ public class AssetRequest {
 
     public void setSpecification(Map<String, Object> specification) {
         this.specification = specification;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

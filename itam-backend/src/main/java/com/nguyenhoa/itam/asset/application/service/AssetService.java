@@ -67,6 +67,7 @@ public class AssetService {
         asset.setSerialNumber(request.getSerialNumber() != null ? request.getSerialNumber().trim() : null);
         asset.setPurchaseDate(request.getPurchaseDate());
         asset.setPurchaseCost(request.getPurchaseCost());
+        asset.setCurrency(request.getCurrency() != null ? request.getCurrency().trim().toUpperCase() : "VND");
         asset.setPurchaseInvoiceUrl(request.getPurchaseInvoiceUrl());
         asset.setWarrantyExpiry(request.getWarrantyExpiry());
         asset.setStatus(AssetStatus.AVAILABLE);
@@ -93,6 +94,9 @@ public class AssetService {
         asset.setSerialNumber(request.getSerialNumber() != null ? request.getSerialNumber().trim() : null);
         asset.setPurchaseDate(request.getPurchaseDate());
         asset.setPurchaseCost(request.getPurchaseCost());
+        if (request.getCurrency() != null) {
+            asset.setCurrency(request.getCurrency().trim().toUpperCase());
+        }
         asset.setPurchaseInvoiceUrl(request.getPurchaseInvoiceUrl());
         asset.setWarrantyExpiry(request.getWarrantyExpiry());
         asset.setSpecification(request.getSpecification());
@@ -134,7 +138,8 @@ public class AssetService {
                 "/api/v1/assets/" + asset.getId() + "/qr",
                 asset.getCreatedBy(),
                 asset.getCreatedAt(),
-                asset.getUpdatedAt()
+                asset.getUpdatedAt(),
+                asset.getCurrency()
         );
     }
 
