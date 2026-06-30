@@ -14,14 +14,16 @@ public class MyAssetResponse {
     private Instant assignedAt;
     private String confirmationStatus;
     private String notes;
+    private UUID allocationId;
 
-    public MyAssetResponse(UUID assetId, String assetCode, String name, Instant assignedAt, String confirmationStatus, String notes) {
+    public MyAssetResponse(UUID assetId, String assetCode, String name, Instant assignedAt, String confirmationStatus, String notes, UUID allocationId) {
         this.assetId = assetId;
         this.assetCode = assetCode;
         this.name = name;
         this.assignedAt = assignedAt;
         this.confirmationStatus = confirmationStatus;
         this.notes = notes;
+        this.allocationId = allocationId;
     }
 
     public UUID getAssetId() {
@@ -46,5 +48,9 @@ public class MyAssetResponse {
 
     public String getNotes() {
         return notes;
+    }
+
+    public UUID getAllocationId() {
+        return allocationId;
     }
 }

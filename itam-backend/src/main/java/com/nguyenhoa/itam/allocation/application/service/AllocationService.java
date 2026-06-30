@@ -160,12 +160,28 @@ public class AllocationService {
     @Transactional(readOnly = true)
     public List<MyAssetResponse> getMyAssets(UUID userId) {
         return assetService.getMyAssets(userId).stream()
-                .map(holder -> new MyAssetResponse(holder.getAssetId(),
-                        holder.getAssetCode(),
-                        holder.getName(),
-                        holder.getAssignedAt(),
-                        holder.getConfirmationStatus(),
-                        holder.getNotes())
+                .map(holder -> {
+                    UUID allocationId = null;
+                    if (holder.getConfirmationStatus() != null) {
+                        try {
+                            ConfirmationStatus status = ConfirmationStatus.valueOf(holder.getConfirmationStatus());
+                            allocationId = allocationRepository.findFirstByAssetAndConfirmationStatusOrderByEventTimeDesc(holder.getAssetId(), status)
+                                    .map(Allocation::getId)
+                                    .orElse(null);
+                        } catch (IllegalArgumentException e) {
+                            throw new BusinessException("INVALID_CONFIRMATION_STATUS", 
+                                    "Trạng thái xác nhận không hợp lệ: " + holder.getConfirmationStatus(), 
+                                    HttpStatus.INTERNAL_SERVER_ERROR);
+                        }
+                    }
+                    return new MyAssetResponse(holder.getAssetId(),
+                            holder.getAssetCode(),
+                            holder.getName(),
+                            holder.getAssignedAt(),
+                            holder.getConfirmationStatus(),
+                            holder.getNotes(),
+                            allocationId);
+                }
                 ).collect(Collectors.toList());
     }
 
