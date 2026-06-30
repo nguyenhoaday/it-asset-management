@@ -9,6 +9,9 @@ import com.nguyenhoa.itam.allocation.domain.Allocation;
 import com.nguyenhoa.itam.allocation.domain.AllocationRepository;
 import com.nguyenhoa.itam.allocation.domain.ConfirmationStatus;
 import com.nguyenhoa.itam.asset.application.service.AssetService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.nguyenhoa.itam.common.dto.PageResponse;
 import com.nguyenhoa.itam.common.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -183,6 +186,18 @@ public class AllocationService {
                             allocationId);
                 }
                 ).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<AllocationResponse> getAllAllocations(ConfirmationStatus status, Pageable pageable) {
+        Page<Allocation> allocationPage;
+        if (status != null) {
+            allocationPage = allocationRepository.findByConfirmationStatus(status, pageable);
+        } else {
+            allocationPage = allocationRepository.findAll(pageable);
+        }
+        Page<AllocationResponse> responsePage = allocationPage.map(this::mapToResponse);
+        return new PageResponse<>(responsePage);
     }
 
     @Transactional(readOnly = true)
