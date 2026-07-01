@@ -9,6 +9,7 @@ import com.nguyenhoa.itam.allocation.domain.Allocation;
 import com.nguyenhoa.itam.allocation.domain.AllocationRepository;
 import com.nguyenhoa.itam.allocation.domain.ConfirmationStatus;
 import com.nguyenhoa.itam.asset.application.service.AssetService;
+import com.nguyenhoa.itam.audit.application.service.AuditLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.nguyenhoa.itam.common.dto.PageResponse;
@@ -26,10 +27,12 @@ import java.util.stream.Collectors;
 public class AllocationService {
     private final AllocationRepository allocationRepository;
     private final AssetService assetService;
+    private final AuditLogService auditLogService;
 
-    public AllocationService(AllocationRepository allocationRepository, AssetService assetService) {
+    public AllocationService(AllocationRepository allocationRepository, AssetService assetService, AuditLogService auditLogService) {
         this.allocationRepository = allocationRepository;
         this.assetService = assetService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -57,6 +60,14 @@ public class AllocationService {
         Allocation savedAllocation = allocationRepository.save(allocation);
         assetService.markAssetAsPending(request.getAssetId());
 
+        auditLogService.log(
+                createdBy,
+                "ALLOCATE",
+                "ASSET",
+                request.getAssetId(),
+                java.util.Map.of("toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
+        );
+
         return mapToResponse(savedAllocation);
     }
 
@@ -76,6 +87,14 @@ public class AllocationService {
 
         Allocation savedAllocation = allocationRepository.save(allocation);
         assetService.markAssetAsAvailable(assetId);
+
+        auditLogService.log(
+                createdBy,
+                "RETURN",
+                "ASSET",
+                assetId,
+                java.util.Map.of("fromUser", fromUserId != null ? fromUserId.toString() : "", "notes", notes != null ? notes : "")
+        );
 
         return mapToResponse(savedAllocation);
     }
@@ -109,6 +128,14 @@ public class AllocationService {
         Allocation savedAllocation = allocationRepository.save(allocation);
         assetService.markAssetAsPending(request.getAssetId());
 
+        auditLogService.log(
+                createdBy,
+                "TRANSFER",
+                "ASSET",
+                request.getAssetId(),
+                java.util.Map.of("fromUser", fromUserId.toString(), "toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
+        );
+
         return mapToResponse(savedAllocation);
     }
 
@@ -132,6 +159,14 @@ public class AllocationService {
 
         allocationRepository.save(allocation);
         assetService.markAssetAsAssigned(allocation.getAsset());
+
+        auditLogService.log(
+                userId,
+                "CONFIRM",
+                "ASSET",
+                allocation.getAsset(),
+                java.util.Map.of("allocationId", allocation.getId().toString())
+        );
     }
 
     @Transactional
@@ -158,6 +193,14 @@ public class AllocationService {
         } else if (allocation.getActionType() == ActionType.TRANSFER) {
             assetService.markAssetAsAssigned(allocation.getAsset());
         }
+
+        auditLogService.log(
+                userId,
+                "REJECT",
+                "ASSET",
+                allocation.getAsset(),
+                java.util.Map.of("allocationId", allocation.getId().toString())
+        );
     }
 
     @Transactional(readOnly = true)

@@ -56,15 +56,15 @@ public class AssetController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
-    public ResponseEntity<ApiResponse<AssetResponse>> updateAsset(@PathVariable UUID id,@Valid @RequestBody AssetRequest assetRequest) {
-        AssetResponse assetResponse = assetService.updateAsset(id, assetRequest);
+    public ResponseEntity<ApiResponse<AssetResponse>> updateAsset(@PathVariable UUID id, @Valid @RequestBody AssetRequest assetRequest, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        AssetResponse assetResponse = assetService.updateAsset(id, assetRequest, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success(assetResponse));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<String>> deleteAsset(@PathVariable UUID id) {
-        assetService.softDeleteAsset(id);
+    public ResponseEntity<ApiResponse<String>> deleteAsset(@PathVariable UUID id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        assetService.softDeleteAsset(id, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Đã xóa tài sản thành công"));
     }
 

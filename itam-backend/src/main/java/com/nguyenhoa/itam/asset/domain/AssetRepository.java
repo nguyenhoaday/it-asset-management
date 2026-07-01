@@ -32,8 +32,15 @@ public interface AssetRepository extends JpaRepository<Asset, UUID> {
     """)
     Page<Asset> searchAssets(@Param("categoryId") UUID categoryId, @Param("status") AssetStatus status, @Param("search") String search, Pageable pageable);
 
-    // Đếm tổng số tài sản chưa bị xóa mềm (để làm báo cáo kiểm kê)
+    // Đếm tổng số tài sản chưa bị xóa mềm
     long countByDeletedAtIsNull();
+
+    long countByStatusAndDeletedAtIsNull(AssetStatus status);
+
+    long countByDeletedAtIsNullAndWarrantyExpiryBetween(LocalDate start, LocalDate end);
+
+    @Query("SELECT a.category.name, COUNT(a) FROM Asset a WHERE a.deletedAt IS NULL GROUP BY a.category.name")
+    List<Object[]> countAssetsByCategory();
 
     // Lấy danh sách tất cả UUID của tài sản đang hoạt động (để đối chiếu khi đóng phiên)
     @Query("SELECT a.id FROM Asset a WHERE a.deletedAt IS NULL")
