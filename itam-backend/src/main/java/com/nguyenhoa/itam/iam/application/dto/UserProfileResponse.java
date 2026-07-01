@@ -9,14 +9,16 @@ public class UserProfileResponse {
     private String fullName;
     private String role;
     private String departmentName;
+    private Boolean isActive;
 
-    public UserProfileResponse(UUID id, String username, String email, String fullName, String role, String departmentName) {
+    public UserProfileResponse(UUID id, String username, String email, String fullName, String role, String departmentName, Boolean isActive) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
         this.role = role;
         this.departmentName = departmentName;
+        this.isActive = isActive;
     }
 
     public UUID getId() {
@@ -65,5 +67,13 @@ public class UserProfileResponse {
 
     public void setDepartmentName(String departmentName) {
         this.departmentName = departmentName;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("""
         SELECT new com.nguyenhoa.itam.iam.application.dto.UserProfileResponse(
             u.id, u.username, u.email, ui.fullName,
-            cast(u.role as string), d.name
+            cast(u.role as string), d.name, u.isActive
         )
         FROM User u
         LEFT JOIN UserInfo ui ON ui.id = u.id
@@ -32,7 +32,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query(value = """
         SELECT new com.nguyenhoa.itam.iam.application.dto.UserProfileResponse(
             u.id, u.username, u.email, ui.fullName,
-            cast(u.role as string), d.name
+            cast(u.role as string), d.name, u.isActive
         )
         FROM User u
         LEFT JOIN UserInfo ui ON ui.id = u.id
