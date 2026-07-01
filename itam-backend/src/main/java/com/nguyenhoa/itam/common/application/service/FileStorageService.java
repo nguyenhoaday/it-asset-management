@@ -50,7 +50,7 @@ public class FileStorageService {
         }
 
         // unique name
-        String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+        String uniqueFileName = UUID.randomUUID() + "_" + originalFileName;
 
         try {
             Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
