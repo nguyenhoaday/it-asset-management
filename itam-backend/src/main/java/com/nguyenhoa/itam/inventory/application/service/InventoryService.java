@@ -219,6 +219,20 @@ public class InventoryService {
                 .orElse(null);
     }
 
+    @Transactional(readOnly = true)
+    public List<InventoryItemResponse> getInventoryItemsForReport(UUID sessionId) {
+        return inventoryItemRepository.findBySessionId(sessionId).stream()
+                .map(this::mapToItemResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public InventorySessionResponse getSessionById(UUID sessionId) {
+        return inventorySessionRepository.findById(sessionId)
+                .map(this::mapToSessionResponse)
+                .orElseThrow(() -> new BusinessException("SESSION_NOT_FOUND", "Không tìm thấy đợt kiểm kê", HttpStatus.NOT_FOUND));
+    }
+
     private InventoryItemResponse mapToItemResponse(InventoryItem item) {
         return new InventoryItemResponse(item.getId(),
                 item.getSession().getId(),

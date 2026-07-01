@@ -91,6 +91,13 @@ public class MaintenanceService {
         return logs.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<MaintenanceLogResponse> getAllMaintenancesForReport(java.time.LocalDate from, java.time.LocalDate to) {
+        return maintenanceLogRepository.findByStartDateBetweenOrderByStartDateDesc(from, to).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private MaintenanceLogResponse mapToResponse(MaintenanceLog log) {
         return new MaintenanceLogResponse(log.getId(),
                 log.getAsset(),

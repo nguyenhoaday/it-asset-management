@@ -258,6 +258,13 @@ public class AllocationService {
                 .map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<AllocationResponse> getAllAllocationsForReport(java.time.Instant from, java.time.Instant to) {
+        return allocationRepository.findByEventTimeBetweenOrderByEventTimeDesc(from, to).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private AllocationResponse mapToResponse(Allocation allocation) {
         return new AllocationResponse(
                 allocation.getId(),

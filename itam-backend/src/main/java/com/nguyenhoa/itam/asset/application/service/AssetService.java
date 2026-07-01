@@ -325,6 +325,13 @@ public class AssetService {
         return assets.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<AssetResponse> getAllAssetsForReport() {
+        return assetRepository.findByDeletedAtIsNull().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private AssetDto mapToDto(Asset asset) {
         return new AssetDto(asset.getId(),
                 asset.getAssetCode(),
