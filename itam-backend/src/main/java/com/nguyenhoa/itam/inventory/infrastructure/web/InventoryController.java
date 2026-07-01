@@ -108,26 +108,66 @@ public class InventoryController {
     // Lấy danh sách kết quả quét của đợt kiểm kê
     @GetMapping("/{id}/items")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
-    public ResponseEntity<ApiResponse<InventorySessionItemsResponse>> getSessionItems(@PathVariable UUID id) {
-        List<InventoryItemResponse> items = inventoryService.getInventoryItemsForReport(id);
-
-        List<AssetResponse> assets = assetService.getAllAssetsForReport();
-        Map<UUID, String> assetNames = assets.stream().collect(Collectors.toMap(AssetResponse::getId, AssetResponse::getName, (a, b) -> a));
-        Map<UUID, String> assetCodes = assets.stream().collect(Collectors.toMap(AssetResponse::getId, AssetResponse::getAssetCode, (a, b) -> a));
-
-        List<UUID> userIds = items.stream()
-                .map(InventoryItemResponse::getCheckedBy)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<UUID, String> userNames = new HashMap<>();
-        if (!userIds.isEmpty()) {
-            Map<UUID, UserProfileResponse> profiles = userService.getUserProfilesMap(userIds);
-            userNames = profiles.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getFullName()));
+    public ResponseEntity<ApiResponse<PageResponse<InventoryItemResponse>>> getSessionItems(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        
+        com.nguyenhoa.itam.inventory.domain.CheckedStatus checkedStatus = null;
+        if (status != null && !status.trim().isEmpty() && !status.equalsIgnoreCase("ALL")) {
+            try {
+                checkedStatus = com.nguyenhoa.itam.inventory.domain.CheckedStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Bỏ qua trạng thái không hợp lệ
+            }
         }
 
-        InventorySessionItemsResponse response = new InventorySessionItemsResponse(items, assetNames, assetCodes, userNames);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        List<UUID> matchingAssetIds = new java.util.ArrayList<>();
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        if (hasSearch) {
+            List<AssetResponse> allAssets = assetService.getAllAssetsForReport();
+            String query = search.trim().toLowerCase();
+            matchingAssetIds = allAssets.stream()
+                    .filter(a -> a.getName().toLowerCase().contains(query) || 
+                                 a.getAssetCode().toLowerCase().contains(query))
+                    .map(AssetResponse::getId)
+                    .collect(Collectors.toList());
+        }
+
+        PageResponse<InventoryItemResponse> itemsPage = inventoryService.getInventoryItemsPaginated(
+                id, checkedStatus, hasSearch, matchingAssetIds, pageable);
+
+        List<InventoryItemResponse> content = itemsPage.getContent();
+        if (content != null && !content.isEmpty()) {
+            List<UUID> assetIds = content.stream()
+                    .map(InventoryItemResponse::getAssetId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<AssetResponse> assets = assetService.getAssetsByIds(assetIds);
+            Map<UUID, String> assetNames = assets.stream().collect(Collectors.toMap(AssetResponse::getId, AssetResponse::getName, (a, b) -> a));
+            Map<UUID, String> assetCodes = assets.stream().collect(Collectors.toMap(AssetResponse::getId, AssetResponse::getAssetCode, (a, b) -> a));
+
+            List<UUID> userIds = content.stream()
+                    .map(InventoryItemResponse::getCheckedBy)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<UUID, String> userNames = new HashMap<>();
+            if (!userIds.isEmpty()) {
+                Map<UUID, UserProfileResponse> profiles = userService.getUserProfilesMap(userIds);
+                userNames = profiles.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getFullName()));
+            }
+
+            for (InventoryItemResponse responseItem : content) {
+                responseItem.setAssetName(assetNames.getOrDefault(responseItem.getAssetId(), "N/A"));
+                responseItem.setAssetCode(assetCodes.getOrDefault(responseItem.getAssetId(), "N/A"));
+                responseItem.setCheckedByName(userNames.getOrDefault(responseItem.getCheckedBy(), "Hệ thống"));
+            }
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(itemsPage));
     }
 }

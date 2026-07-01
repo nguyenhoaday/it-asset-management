@@ -332,6 +332,16 @@ public class AssetService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<AssetResponse> getAssetsByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return assetRepository.findByDeletedAtIsNullAndIdIn(ids).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private AssetDto mapToDto(Asset asset) {
         return new AssetDto(asset.getId(),
                 asset.getAssetCode(),

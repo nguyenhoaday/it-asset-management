@@ -13,6 +13,10 @@ public class InventoryItemResponse {
     private CheckedStatus checkedStatus;
     private Instant checkedAt;
     private String notes;
+    
+    private String assetName;
+    private String assetCode;
+    private String checkedByName;
 
     public InventoryItemResponse(UUID id, UUID sessionId, UUID assetId, UUID checkedBy, CheckedStatus checkedStatus, Instant checkedAt, String notes) {
         this.id = id;
@@ -78,5 +82,29 @@ public class InventoryItemResponse {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getAssetName() {
+        return assetName;
+    }
+
+    public void setAssetName(String assetName) {
+        this.assetName = assetName;
+    }
+
+    public String getAssetCode() {
+        return assetCode;
+    }
+
+    public void setAssetCode(String assetCode) {
+        this.assetCode = assetCode;
+    }
+
+    public String getCheckedByName() {
+        return checkedByName;
+    }
+
+    public void setCheckedByName(String checkedByName) {
+        this.checkedByName = checkedByName;
     }
 }

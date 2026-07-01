@@ -227,6 +227,13 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
+    public PageResponse<InventoryItemResponse> getInventoryItemsPaginated(UUID sessionId, CheckedStatus status, boolean hasSearch, List<UUID> assetIds, Pageable pageable) {
+        Page<InventoryItem> itemPage = inventoryItemRepository.findBySessionIdAndFilters(sessionId, status, hasSearch, assetIds, pageable);
+        Page<InventoryItemResponse> responsePage = itemPage.map(this::mapToItemResponse);
+        return new PageResponse<>(responsePage);
+    }
+
+    @Transactional(readOnly = true)
     public InventorySessionResponse getSessionById(UUID sessionId) {
         return inventorySessionRepository.findById(sessionId)
                 .map(this::mapToSessionResponse)
