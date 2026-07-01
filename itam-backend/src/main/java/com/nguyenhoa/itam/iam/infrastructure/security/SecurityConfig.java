@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests
                         -> authorizeRequests.requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/qr").permitAll()
-//                        .requestMatchers("/api/v1/test-mail/**").permitAll() // Test mail
+                        .requestMatchers(HttpMethod.GET, "/api/v1/attachments/files/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

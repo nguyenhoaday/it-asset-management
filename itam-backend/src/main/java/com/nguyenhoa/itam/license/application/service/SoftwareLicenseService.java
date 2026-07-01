@@ -11,6 +11,7 @@ import com.nguyenhoa.itam.license.domain.LicenseAllocation;
 import com.nguyenhoa.itam.license.domain.LicenseAllocationRepository;
 import com.nguyenhoa.itam.license.domain.SoftwareLicense;
 import com.nguyenhoa.itam.license.domain.SoftwareLicenseRepository;
+import com.nguyenhoa.itam.attachment.application.service.AttachmentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,12 +29,14 @@ public class SoftwareLicenseService {
     private final SoftwareLicenseRepository softwareLicenseRepository;
     private final LicenseAllocationRepository licenseAllocationRepository;
     private final UserService userService;
+    private final AttachmentService attachmentService;
 
 
-    public SoftwareLicenseService(SoftwareLicenseRepository softwareLicenseRepository, LicenseAllocationRepository licenseAllocationRepository, UserService userService) {
+    public SoftwareLicenseService(SoftwareLicenseRepository softwareLicenseRepository, LicenseAllocationRepository licenseAllocationRepository, UserService userService, AttachmentService attachmentService) {
         this.softwareLicenseRepository = softwareLicenseRepository;
         this.licenseAllocationRepository = licenseAllocationRepository;
         this.userService = userService;
+        this.attachmentService = attachmentService;
     }
 
     @Transactional
@@ -56,6 +59,11 @@ public class SoftwareLicenseService {
         license.setCreatedBy(createdBy);
 
         SoftwareLicense savedLicense = softwareLicenseRepository.save(license);
+
+        if (savedLicense.getPurchaseInvoiceUrl() != null && savedLicense.getPurchaseInvoiceUrl().contains("/api/v1/attachments/files/")) {
+            attachmentService.updateEntityIdByUrl(savedLicense.getPurchaseInvoiceUrl(), savedLicense.getId());
+        }
+
         return mapToResponse(savedLicense);
     }
 
@@ -96,6 +104,11 @@ public class SoftwareLicenseService {
         license.setPurchaseInvoiceUrl(request.getPurchaseInvoiceUrl());
 
         SoftwareLicense updated = softwareLicenseRepository.save(license);
+
+        if (updated.getPurchaseInvoiceUrl() != null && updated.getPurchaseInvoiceUrl().contains("/api/v1/attachments/files/")) {
+            attachmentService.updateEntityIdByUrl(updated.getPurchaseInvoiceUrl(), updated.getId());
+        }
+
         return mapToResponse(updated);
     }
 

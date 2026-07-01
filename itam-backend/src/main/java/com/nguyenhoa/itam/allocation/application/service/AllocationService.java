@@ -10,6 +10,7 @@ import com.nguyenhoa.itam.allocation.domain.AllocationRepository;
 import com.nguyenhoa.itam.allocation.domain.ConfirmationStatus;
 import com.nguyenhoa.itam.asset.application.service.AssetService;
 import com.nguyenhoa.itam.audit.application.service.AuditLogService;
+import com.nguyenhoa.itam.attachment.application.service.AttachmentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.nguyenhoa.itam.common.dto.PageResponse;
@@ -28,11 +29,13 @@ public class AllocationService {
     private final AllocationRepository allocationRepository;
     private final AssetService assetService;
     private final AuditLogService auditLogService;
+    private final AttachmentService attachmentService;
 
-    public AllocationService(AllocationRepository allocationRepository, AssetService assetService, AuditLogService auditLogService) {
+    public AllocationService(AllocationRepository allocationRepository, AssetService assetService, AuditLogService auditLogService, AttachmentService attachmentService) {
         this.allocationRepository = allocationRepository;
         this.assetService = assetService;
         this.auditLogService = auditLogService;
+        this.attachmentService = attachmentService;
     }
 
     @Transactional
@@ -55,9 +58,15 @@ public class AllocationService {
         allocation.setActionType(ActionType.ASSIGN);
         allocation.setConfirmationStatus(ConfirmationStatus.PENDING);
         allocation.setNotes(request.getNotes());
+        allocation.setHandoverDocUrl(request.getHandoverDocUrl());
         allocation.setCreatedBy(createdBy);
 
         Allocation savedAllocation = allocationRepository.save(allocation);
+
+        if (savedAllocation.getHandoverDocUrl() != null && savedAllocation.getHandoverDocUrl().contains("/api/v1/attachments/files/")) {
+            attachmentService.updateEntityIdByUrl(savedAllocation.getHandoverDocUrl(), savedAllocation.getId());
+        }
+
         assetService.markAssetAsPending(request.getAssetId());
 
         auditLogService.log(

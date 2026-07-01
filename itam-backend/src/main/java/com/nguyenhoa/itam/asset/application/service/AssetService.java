@@ -8,6 +8,7 @@ import com.nguyenhoa.itam.common.dto.PageResponse;
 import com.nguyenhoa.itam.common.exception.BusinessException;
 import com.nguyenhoa.itam.common.util.QRCodeGenerator;
 import com.nguyenhoa.itam.audit.application.service.AuditLogService;
+import com.nguyenhoa.itam.attachment.application.service.AttachmentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,13 +28,15 @@ public class AssetService {
     private final AssetCurrentHolderRepository assetCurrentHolderRepository;
     private final QRCodeGenerator qrCodeGenerator;
     private final AuditLogService auditLogService;
+    private final AttachmentService attachmentService;
 
-    public AssetService(AssetRepository assetRepository, CategoryRepository categoryRepository, AssetCurrentHolderRepository assetCurrentHolderRepository, QRCodeGenerator qrCodeGenerator, AuditLogService auditLogService) {
+    public AssetService(AssetRepository assetRepository, CategoryRepository categoryRepository, AssetCurrentHolderRepository assetCurrentHolderRepository, QRCodeGenerator qrCodeGenerator, AuditLogService auditLogService, AttachmentService attachmentService) {
         this.assetRepository = assetRepository;
         this.categoryRepository = categoryRepository;
         this.assetCurrentHolderRepository = assetCurrentHolderRepository;
         this.qrCodeGenerator = qrCodeGenerator;
         this.auditLogService = auditLogService;
+        this.attachmentService = attachmentService;
     }
 
     // Lấy chi tiết tài sản theo ID (loại bỏ tài sản đã xóa mềm)
@@ -79,6 +82,10 @@ public class AssetService {
 
         Asset savedAsset = assetRepository.saveAndFlush(asset);
 
+        if (savedAsset.getPurchaseInvoiceUrl() != null && savedAsset.getPurchaseInvoiceUrl().contains("/api/v1/attachments/files/")) {
+            attachmentService.updateEntityIdByUrl(savedAsset.getPurchaseInvoiceUrl(), savedAsset.getId());
+        }
+
         auditLogService.log(
                 createdById,
                 "CREATE",
@@ -119,6 +126,10 @@ public class AssetService {
         }
 
         Asset updatedAsset = assetRepository.saveAndFlush(asset);
+
+        if (updatedAsset.getPurchaseInvoiceUrl() != null && updatedAsset.getPurchaseInvoiceUrl().contains("/api/v1/attachments/files/")) {
+            attachmentService.updateEntityIdByUrl(updatedAsset.getPurchaseInvoiceUrl(), updatedAsset.getId());
+        }
 
         if (!diff.isEmpty()) {
             auditLogService.log(updatedById, "UPDATE", "ASSET", updatedAsset.getId(), diff);

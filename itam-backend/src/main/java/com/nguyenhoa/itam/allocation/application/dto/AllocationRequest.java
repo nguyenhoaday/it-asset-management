@@ -13,6 +13,8 @@ public class AllocationRequest {
 
     private String notes;
 
+    private String handoverDocUrl;
+
     public UUID getAssetId() {
         return assetId;
     }
@@ -35,5 +37,13 @@ public class AllocationRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getHandoverDocUrl() {
+        return handoverDocUrl;
+    }
+
+    public void setHandoverDocUrl(String handoverDocUrl) {
+        this.handoverDocUrl = handoverDocUrl;
     }
 }
