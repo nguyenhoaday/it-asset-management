@@ -4,6 +4,9 @@ import com.nguyenhoa.itam.asset.application.service.AssetService;
 import com.nguyenhoa.itam.common.exception.BusinessException;
 import com.nguyenhoa.itam.inventory.application.dto.*;
 import com.nguyenhoa.itam.inventory.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.nguyenhoa.itam.common.dto.PageResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -200,6 +203,20 @@ public class InventoryService {
     @Transactional(readOnly = true)
     public boolean hasActiveSessions() {
         return inventorySessionRepository.existsByStatus(InventorySessionStatus.ACTIVE);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<InventorySessionResponse> getAllSessions(Pageable pageable) {
+        Page<InventorySession> sessionPage = inventorySessionRepository.findAll(pageable);
+        Page<InventorySessionResponse> responsePage = sessionPage.map(this::mapToSessionResponse);
+        return new PageResponse<>(responsePage);
+    }
+
+    @Transactional(readOnly = true)
+    public InventorySessionResponse getActiveSession() {
+        return inventorySessionRepository.findFirstByStatus(InventorySessionStatus.ACTIVE)
+                .map(this::mapToSessionResponse)
+                .orElse(null);
     }
 
     private InventoryItemResponse mapToItemResponse(InventoryItem item) {

@@ -12,6 +12,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
+import com.nguyenhoa.itam.common.dto.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -67,6 +72,25 @@ public class InventoryController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<InventoryReportResponse>> getReport(@PathVariable UUID id) {
         InventoryReportResponse response = inventoryService.getReport(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // Lấy danh sách tất cả đợt kiểm kê
+    @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
+    public ResponseEntity<ApiResponse<PageResponse<InventorySessionResponse>>> getAllSessions(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        PageResponse<InventorySessionResponse> response = inventoryService.getAllSessions(pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // Lấy đợt kiểm kê đang hoạt động
+    @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
+    public ResponseEntity<ApiResponse<InventorySessionResponse>> getActiveSession() {
+        InventorySessionResponse response = inventoryService.getActiveSession();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
