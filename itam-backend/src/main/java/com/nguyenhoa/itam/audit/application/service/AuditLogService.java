@@ -5,6 +5,7 @@ import com.nguyenhoa.itam.audit.domain.AuditLog;
 import com.nguyenhoa.itam.audit.domain.AuditLogRepository;
 import com.nguyenhoa.itam.iam.application.dto.UserProfileResponse;
 import com.nguyenhoa.itam.iam.application.service.UserService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
     private final UserService userService;
 
-    public AuditLogService(AuditLogRepository auditLogRepository, UserService userService) {
+    public AuditLogService(AuditLogRepository auditLogRepository, @Lazy UserService userService) {
         this.auditLogRepository = auditLogRepository;
         this.userService = userService;
     }
