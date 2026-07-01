@@ -47,4 +47,5 @@ public interface AssetRepository extends JpaRepository<Asset, UUID> {
     List<UUID> findAllActiveAssetIds();
 
     List<Asset> findByDeletedAtIsNullAndWarrantyExpiryBetween(LocalDate start, LocalDate end);
+    List<Asset> findByDeletedAtIsNull();
 }

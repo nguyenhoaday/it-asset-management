@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface MaintenanceLogRepository extends JpaRepository<MaintenanceLog, UUID> {
     // Tìm lịch sử bảo trì của một thiết bị, sắp xếp mới nhất trước
     List<MaintenanceLog> findByAssetOrderByCreatedAtDesc(UUID assetId);
+    List<MaintenanceLog> findByStartDateBetweenOrderByStartDateDesc(java.time.LocalDate from, java.time.LocalDate to);
 }

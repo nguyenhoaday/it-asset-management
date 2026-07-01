@@ -12,4 +12,5 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
     List<Allocation> findByAssetOrderByEventTimeDesc(UUID assetId);
     Optional<Allocation> findFirstByAssetAndConfirmationStatusOrderByEventTimeDesc(UUID assetId, ConfirmationStatus confirmationStatus);
     Page<Allocation> findByConfirmationStatus(ConfirmationStatus confirmationStatus, Pageable pageable);
+    List<Allocation> findByEventTimeBetweenOrderByEventTimeDesc(java.time.Instant from, java.time.Instant to);
 }
