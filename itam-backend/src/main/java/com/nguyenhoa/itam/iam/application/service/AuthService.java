@@ -46,17 +46,17 @@ public class AuthService {
 
     @Transactional
     public void register(RegisterRequest request) {
-        if(userRepository.existsByUsername(request.getUsername())) {
+        if(userRepository.existsByUsername(request.getUsername().toLowerCase())) {
             throw new BusinessException("USERNAME_ALREADY_EXISTS", "Tên đăng nhập đã tồn tại trong hệ thống", HttpStatus.CONFLICT);
         }
 
-        if(userRepository.existsByEmail(request.getEmail())) {
+        if(userRepository.existsByEmail(request.getEmail().toLowerCase())) {
             throw new BusinessException("EMAIL_ALREADY_EXISTS", "Địa chỉ email đã được đăng ký tài khoản khác", HttpStatus.CONFLICT);
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+        user.setUsername(request.getUsername().toLowerCase());
+        user.setEmail(request.getEmail().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         Role userRole = Role.EMPLOYEE;
@@ -89,7 +89,7 @@ public class AuthService {
     @Transactional
     public AuthResult login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getUsername().toLowerCase(), request.getPassword())
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);

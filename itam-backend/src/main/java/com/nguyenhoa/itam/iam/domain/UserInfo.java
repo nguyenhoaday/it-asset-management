@@ -30,6 +30,10 @@ public class UserInfo {
     @JoinColumn(name = "department_id")
     private Department department;
 
+    @ColumnDefault("100")
+    @Column(name = "care_score")
+    private Integer careScore;
+
     @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
@@ -72,6 +76,14 @@ public class UserInfo {
 
     public void setDepartment(Department department) {
         this.department = department;
+    }
+
+    public Integer getCareScore() {
+        return careScore;
+    }
+
+    public void setCareScore(Integer careScore) {
+        this.careScore = careScore;
     }
 
     public Instant getCreatedAt() {

@@ -13,6 +13,10 @@ import com.nguyenhoa.itam.iam.domain.UserInfoRepository;
 import com.nguyenhoa.itam.audit.application.service.AuditLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,18 +26,22 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final UserInfoRepository userInfoRepository;
     private final AuditLogService auditLogService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, DepartmentRepository departmentRepository, UserInfoRepository userInfoRepository, AuditLogService auditLogService) {
+    public UserService(UserRepository userRepository, DepartmentRepository departmentRepository, UserInfoRepository userInfoRepository, AuditLogService auditLogService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
         this.userInfoRepository = userInfoRepository;
         this.auditLogService = auditLogService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -51,8 +59,38 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UserProfileResponse> getAllUsers(String search, Pageable pageable) {
-        return userRepository.searchUserProfiles(search, pageable);
+    public Page<UserProfileResponse> getAllUsers(
+            String search,
+            UUID departmentId,
+            Boolean isActive,
+            Pageable pageable) {
+        Specification<UserInfo> spec = (root, query, cb) -> {
+            boolean isCountQuery = Long.class == query.getResultType() || long.class == query.getResultType();
+
+            if (!isCountQuery) {
+                root.fetch("user", JoinType.LEFT);
+                root.fetch("department", JoinType.LEFT);
+            }
+
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.trim().isEmpty()) {
+                String like = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("user").get("username")), like),
+                    cb.like(cb.lower(root.get("user").get("email")), like),
+                    cb.like(cb.lower(root.get("fullName")), like)
+                ));
+            }
+            if (departmentId != null) {
+                predicates.add(cb.equal(root.get("department").get("id"), departmentId));
+            }
+            if (isActive != null) {
+                predicates.add(cb.equal(root.get("user").get("isActive"), isActive));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return userInfoRepository.findAll(spec, pageable).map(this::mapToProfileResponse);
     }
 
     @Transactional(readOnly = true)
@@ -68,9 +106,8 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Map<UUID, UserProfileResponse> getUserProfilesMap(List<UUID> userIds) {
-        return userRepository.findAllById(userIds).stream()
-                .map(user -> userRepository.findUserProfileById(user.getId()).orElse(null))
-                .filter(java.util.Objects::nonNull)
+        if (userIds == null || userIds.isEmpty()) return java.util.Collections.emptyMap();
+        return userRepository.findUserProfilesByIds(userIds).stream()
                 .collect(Collectors.toMap(UserProfileResponse::getId, u -> u));
     }
 
@@ -86,13 +123,13 @@ public class UserService {
 
         java.util.Map<String, Object> diff = new java.util.HashMap<>();
 
-        if (request.getFullName() != null && !request.getFullName().trim().isEmpty() 
+        if (request.getFullName() != null && !request.getFullName().trim().isEmpty()
                 && !request.getFullName().trim().equals(userInfo.getFullName())) {
             diff.put("fullName", java.util.Map.of("old", userInfo.getFullName(), "new", request.getFullName().trim()));
             userInfo.setFullName(request.getFullName().trim());
         }
 
-        if (request.getUsername() != null && !request.getUsername().trim().isEmpty() 
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()
                 && !request.getUsername().trim().equals(user.getUsername())) {
             String newUsername = request.getUsername().trim();
             if (userRepository.existsByUsername(newUsername)) {
@@ -102,7 +139,7 @@ public class UserService {
             user.setUsername(newUsername);
         }
 
-        if (request.getEmail() != null && !request.getEmail().trim().isEmpty() 
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()
                 && !request.getEmail().trim().equals(user.getEmail())) {
             String newEmail = request.getEmail().trim();
             if (userRepository.existsByEmail(newEmail)) {
@@ -158,7 +195,70 @@ public class UserService {
                 userInfo.getFullName(),
                 user.getRole().name(),
                 userInfo.getDepartment() != null ? userInfo.getDepartment().getName() : null,
-                user.getIsActive()
+                user.getIsActive(),
+                userInfo.getCareScore()
+        );
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new BusinessException("USER_NOT_FOUND", "Không tìm thấy thông tin người dùng", HttpStatus.NOT_FOUND)
+        );
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new BusinessException("INVALID_OLD_PASSWORD", "Mật khẩu cũ không chính xác", HttpStatus.BAD_REQUEST);
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        auditLogService.log(userId, "UPDATE", "USER_PASSWORD", userId, java.util.Map.of("action", "change_password"));
+    }
+
+    @Transactional
+    public String resetPasswordByAdmin(UUID userId, UUID adminId) {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new BusinessException("USER_NOT_FOUND", "Không tìm thấy thông tin người dùng", HttpStatus.NOT_FOUND)
+        );
+
+        int randomDigits = 1000 + (int)(Math.random() * 9000);
+        String tempPassword = "Itam@" + randomDigits;
+
+        user.setPasswordHash(passwordEncoder.encode(tempPassword));
+        userRepository.save(user);
+
+        auditLogService.log(adminId, "UPDATE", "USER_PASSWORD", userId, java.util.Map.of("action", "reset_password_by_admin"));
+
+        return tempPassword;
+    }
+
+    @Transactional
+    public void addCareScore(UUID userId, int points) {
+        userInfoRepository.findById(userId).ifPresent(userInfo -> {
+            int currentScore = userInfo.getCareScore() != null ? userInfo.getCareScore() : 100;
+            int newScore = Math.max(0, Math.min(100, currentScore + points));
+            userInfo.setCareScore(newScore);
+            userInfoRepository.save(userInfo);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<UserProfileResponse> getLeaderboard() {
+        return userInfoRepository.findTop5ByOrderByCareScoreDesc()
+                .stream()
+                .map(this::mapToProfileResponse)
+                .toList();
+    }
+
+    private UserProfileResponse mapToProfileResponse(UserInfo userInfo) {
+        return new UserProfileResponse(
+                userInfo.getUser().getId(),
+                userInfo.getUser().getUsername(),
+                userInfo.getUser().getEmail(),
+                userInfo.getFullName(),
+                userInfo.getUser().getRole().name(),
+                userInfo.getDepartment() != null ? userInfo.getDepartment().getName() : null,
+                userInfo.getUser().getIsActive(),
+                userInfo.getCareScore()
         );
     }
 }

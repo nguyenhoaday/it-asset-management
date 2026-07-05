@@ -15,6 +15,7 @@ import com.nguyenhoa.itam.common.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import com.nguyenhoa.itam.iam.application.dto.UpdateUserRequest;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,10 +43,16 @@ public class UserController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
     public ResponseEntity<ApiResponse<PageResponse<UserProfileResponse>>> getAllUsers(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) Boolean isActive,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<UserProfileResponse> usersPage = userService.getAllUsers(search, pageable);
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "fullName") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+        
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<UserProfileResponse> usersPage = userService.getAllUsers(search, departmentId, isActive, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(usersPage)));
     }
 
@@ -58,5 +65,29 @@ public class UserController {
     ) {
         UserProfileResponse updated = userService.updateUser(id, request, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success(updated));
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @jakarta.validation.Valid @RequestBody com.nguyenhoa.itam.iam.application.dto.ChangePasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        userService.changePassword(userPrincipal.getId(), request.getOldPassword(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        String tempPassword = userService.resetPasswordByAdmin(id, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.success(tempPassword));
+    }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<ApiResponse<java.util.List<UserProfileResponse>>> getLeaderboard() {
+        return ResponseEntity.ok(ApiResponse.success(userService.getLeaderboard()));
     }
 }

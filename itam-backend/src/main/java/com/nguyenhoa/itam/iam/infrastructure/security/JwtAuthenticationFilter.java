@@ -41,6 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = jwtTokenProvider.getUsernameFromToken(jwt);
                 String role = jwtTokenProvider.getRoleFromToken(jwt);
                 String userIdStr = jwtTokenProvider.getUserIdFromToken(jwt);
+                String email = jwtTokenProvider.getEmailFromToken(jwt);
 
                 UUID userId = (userIdStr != null) ? UUID.fromString(userIdStr) : null;
 
@@ -49,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         ? Collections.singletonList(new SimpleGrantedAuthority(role))
                         : Collections.emptyList();
 
-                UserPrincipal userPrincipal = new UserPrincipal(userId, username, null, null, true, authorities);
+                UserPrincipal userPrincipal = new UserPrincipal(userId, username, email, null, true, authorities);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null, authorities);
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

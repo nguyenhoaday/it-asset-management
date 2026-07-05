@@ -8,6 +8,9 @@ import com.nguyenhoa.itam.iam.application.service.UserService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +42,20 @@ public class AuditLogService {
 
     @Transactional(readOnly = true)
     public Page<AuditLogResponse> getAuditLogs(String entityType, UUID entityId, String action, Pageable pageable) {
-        Page<AuditLog> auditLogsPage = auditLogRepository.searchAuditLogs(entityType, entityId, action, pageable);
+        Specification<AuditLog> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (entityType != null && !entityType.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("entityType"), entityType.trim()));
+            }
+            if (entityId != null) {
+                predicates.add(cb.equal(root.get("entityId"), entityId));
+            }
+            if (action != null && !action.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("action"), action.trim()));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<AuditLog> auditLogsPage = auditLogRepository.findAll(spec, pageable);
 
         List<UUID> userIds = auditLogsPage.getContent().stream()
                 .map(AuditLog::getUser)

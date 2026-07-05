@@ -51,6 +51,7 @@ public class JwtTokenProvider {
                 .subject(userPrincipal.getUsername())
                 .claim("userId", userPrincipal.getId().toString())
                 .claim("role", role)
+                .claim("email", userPrincipal.getEmail())
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(signingKey)
@@ -70,6 +71,11 @@ public class JwtTokenProvider {
     // Lấy role từ claims (trả về null nếu token cũ không có claim này)
     public String getRoleFromToken(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    // Lấy email từ claims
+    public String getEmailFromToken(String token) {
+        return parseClaims(token).get("email", String.class);
     }
 
     // Kiểm tra token hợp lệ

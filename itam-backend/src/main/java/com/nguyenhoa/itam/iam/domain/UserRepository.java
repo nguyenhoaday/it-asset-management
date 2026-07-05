@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("""
         SELECT new com.nguyenhoa.itam.iam.application.dto.UserProfileResponse(
             u.id, u.username, u.email, ui.fullName,
-            cast(u.role as string), d.name, u.isActive
+            cast(u.role as string), d.name, u.isActive, ui.careScore
         )
         FROM User u
         LEFT JOIN UserInfo ui ON ui.id = u.id
@@ -29,30 +29,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     """)
     Optional<UserProfileResponse> findUserProfileById(@Param("userId") UUID userId);
 
-    @Query(value = """
+    @Query("""
         SELECT new com.nguyenhoa.itam.iam.application.dto.UserProfileResponse(
             u.id, u.username, u.email, ui.fullName,
-            cast(u.role as string), d.name, u.isActive
+            cast(u.role as string), d.name, u.isActive, ui.careScore
         )
         FROM User u
         LEFT JOIN UserInfo ui ON ui.id = u.id
         LEFT JOIN ui.department d
-        WHERE (:search IS NULL OR :search = '' 
-               OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%'))
-               OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-               OR LOWER(ui.fullName) LIKE LOWER(CONCAT('%', :search, '%')))
-        ORDER BY ui.fullName ASC
-    """, countQuery = """
-        SELECT COUNT(u)
-        FROM User u
-        LEFT JOIN UserInfo ui ON ui.id = u.id
-        LEFT JOIN ui.department d
-        WHERE (:search IS NULL OR :search = '' 
-               OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%'))
-               OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-               OR LOWER(ui.fullName) LIKE LOWER(CONCAT('%', :search, '%')))
+        WHERE u.id IN :userIds
     """)
-    Page<UserProfileResponse> searchUserProfiles(@Param("search") String search, Pageable pageable);
+    List<UserProfileResponse> findUserProfilesByIds(@Param("userIds") List<UUID> userIds);
 
     List<User> findByRoleIn(List<Role> roles);
 }

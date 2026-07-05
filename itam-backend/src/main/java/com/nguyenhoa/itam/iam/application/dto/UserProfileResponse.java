@@ -10,8 +10,9 @@ public class UserProfileResponse {
     private String role;
     private String departmentName;
     private Boolean isActive;
+    private Integer careScore;
 
-    public UserProfileResponse(UUID id, String username, String email, String fullName, String role, String departmentName, Boolean isActive) {
+    public UserProfileResponse(UUID id, String username, String email, String fullName, String role, String departmentName, Boolean isActive, Integer careScore) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -19,6 +20,7 @@ public class UserProfileResponse {
         this.role = role;
         this.departmentName = departmentName;
         this.isActive = isActive;
+        this.careScore = careScore;
     }
 
     public UUID getId() {
@@ -75,5 +77,13 @@ public class UserProfileResponse {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public Integer getCareScore() {
+        return careScore;
+    }
+
+    public void setCareScore(Integer careScore) {
+        this.careScore = careScore;
     }
 }
