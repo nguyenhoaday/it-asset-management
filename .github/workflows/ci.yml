@@ -5,19 +5,21 @@ on:
     branches: [ main ]
     paths:
       - 'itam-backend/**'
+      - 'itam-frontend/**'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'itam-backend/**'
+      - 'itam-frontend/**'
       - '.github/workflows/ci.yml'
 
 permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build and Test Backend
+  build-and-test-backend:
+    name: Build and Test Backend (Spring Boot 4.1)
     runs-on: ubuntu-latest
 
     services:
@@ -74,11 +76,33 @@ jobs:
           SPRING_MAIL_USERNAME: test-system@itam.com
           SPRING_MAIL_PASSWORD: testpassword
           SPRING_MAIL_FROM_NAME: "Hệ thống ITAM"
-          JWT_SECRET: "test_secret_key_for_ci_build_only_1234567890"
+          JWT_SECRET: "test_secret_key_for_ci_build_only_at_least_64_characters_long_1234567890"
           JWT_EXPIRATION_MS: 900000
           JWT_REFRESH_EXPIRATION_MS: 604800000
           SPRING_SQL_INIT_MODE: always
           SPRING_SQL_INIT_SCHEMA_LOCATIONS: classpath:db/init_schema.sql
+
+  build-frontend:
+    name: Build Frontend (React 19 + Vite 7 PWA)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'itam-frontend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: itam-frontend
+
+      - name: Build Frontend
+        run: npm run build
+        working-directory: itam-frontend
 
   security-scan:
     name: Security Scans (Trivy and Semgrep)
@@ -108,5 +132,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - name: Test Docker Build
+      - name: Test Docker Build Backend
         run: docker build -t itam-backend ./itam-backend
+
+      - name: Test Docker Build Frontend
+        run: docker build -t itam-frontend ./itam-frontend
+
+

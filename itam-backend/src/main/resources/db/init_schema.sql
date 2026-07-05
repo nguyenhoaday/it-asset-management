@@ -30,6 +30,7 @@ CREATE TABLE user_infos
     user_id       UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     full_name     VARCHAR(100) NOT NULL,
     department_id UUID REFERENCES departments(id),
+    care_score    INT DEFAULT 100,
     created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -194,7 +195,7 @@ CREATE TABLE notifications
     related_entity_type VARCHAR(50),
     related_entity_id   UUID,
     sent_at             TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    status              VARCHAR(20) DEFAULT 'SENT' CHECK (status IN ('SENT','FAILED','PENDING'))
+    status              VARCHAR(20) DEFAULT 'SENT' CHECK (status IN ('SENT','READ','FAILED','PENDING'))
 );
 
 -- 12. AUDIT LOGS
@@ -220,6 +221,15 @@ CREATE TABLE attachments
     file_name   VARCHAR(255),
     uploaded_by UUID REFERENCES users(id),
     uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. SYSTEM CONFIGS
+CREATE TABLE system_configs
+(
+    config_key   VARCHAR(100) PRIMARY KEY,
+    config_value VARCHAR(255) NOT NULL,
+    description  VARCHAR(500),
+    updated_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_attachments_entity ON attachments(entity_type, entity_id);
@@ -252,11 +262,13 @@ CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX idx_audit_created ON audit_logs(created_at);
 
 CREATE INDEX idx_user_infos_department ON user_infos(department_id);
+CREATE INDEX idx_user_infos_care_score ON user_infos(care_score DESC);
 
 CREATE INDEX idx_license_allocations_license ON license_allocations(license_id);
 CREATE INDEX idx_license_allocations_user ON license_allocations(user_id);
 CREATE INDEX idx_license_allocations_active ON license_allocations(returned_at) WHERE returned_at IS NULL;
 
+CREATE INDEX idx_notifications_recipient_status_sent ON notifications(recipient_email, status, sent_at DESC);
 CREATE INDEX idx_notifications_sent_at ON notifications(sent_at);
 CREATE INDEX idx_notifications_entity ON notifications(related_entity_type, related_entity_id);
 

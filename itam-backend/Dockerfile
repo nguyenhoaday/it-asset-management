@@ -1,24 +1,31 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-COPY .mvn/ .mvn
+COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
-RUN chmod +x mvnw
-
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw package -DskipTests -B
 
-FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S spring && adduser -S spring -G spring
+FROM eclipse-temurin:21-jre-alpine AS runtime
+
+RUN addgroup -S itam && adduser -S itam -G itam
+
 WORKDIR /app
 
-RUN mkdir -p /app/uploads && chown -R spring:spring /app
+COPY --from=builder /app/target/*.jar app.jar
 
-COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+RUN mkdir -p /app/uploads && chown -R itam:itam /app
 
-USER spring
+USER itam
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD wget -qO- http://localhost:${SERVER_PORT:-8080}/actuator/health | grep -q '"status":"UP"' || exit 1
 
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.jar"]

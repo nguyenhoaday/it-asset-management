@@ -1,0 +1,124 @@
+services:
+
+  # PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: itam_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-itam_db}
+      POSTGRES_USER: ${POSTGRES_USER:-itam_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./itam-backend/src/main/resources/db:/docker-entrypoint-initdb.d:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '1.50'
+          memory: 1536M
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-itam_user} -d ${POSTGRES_DB:-itam_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: itam_redis
+    restart: unless-stopped
+    command: >
+      sh -c "
+        if [ -n '${REDIS_PASSWORD:-}' ]; then
+          redis-server --requirepass '${REDIS_PASSWORD}';
+        else
+          redis-server;
+        fi
+      "
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    healthcheck:
+      test: >
+        sh -c "
+          if [ -n '${REDIS_PASSWORD:-}' ]; then
+            redis-cli -a '${REDIS_PASSWORD}' ping | grep PONG;
+          else
+            redis-cli ping | grep PONG;
+          fi
+        "
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./itam-backend
+    container_name: itam_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-itam_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-itam_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-${APP_FRONTEND_URL:-http://localhost}}
+      APP_COOKIE_SECURE: ${APP_COOKIE_SECURE:-false}
+      APP_COOKIE_SAME_SITE: ${APP_COOKIE_SAME_SITE:-Lax}
+      JAVA_OPTS: "-XX:MaxRAMPercentage=65.0"
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 3072M
+
+  # Frontend
+  frontend:
+    build:
+      context: ./itam-frontend
+    container_name: itam_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    environment:
+      # URL backend — docker-entrypoint.sh inject vào window.__ENV__ ở runtime
+      # Khi chạy Docker local: frontend ở port 80, backend ở port 8080 trên cùng host
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+      VITE_API_PREFIX: ${VITE_API_PREFIX:-/api/v1}
+    ports:
+      - "${FRONTEND_HOST_PORT:-80}:80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
