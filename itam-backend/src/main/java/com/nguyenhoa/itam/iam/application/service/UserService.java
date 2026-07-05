@@ -125,7 +125,7 @@ public class UserService {
 
         if (request.getFullName() != null && !request.getFullName().trim().isEmpty()
                 && !request.getFullName().trim().equals(userInfo.getFullName())) {
-            diff.put("fullName", java.util.Map.of("old", userInfo.getFullName(), "new", request.getFullName().trim()));
+            diff.put("fullName", createDiffMap(userInfo.getFullName(), request.getFullName().trim()));
             userInfo.setFullName(request.getFullName().trim());
         }
 
@@ -135,7 +135,7 @@ public class UserService {
             if (userRepository.existsByUsername(newUsername)) {
                 throw new BusinessException("USERNAME_ALREADY_EXISTS", "Tên đăng nhập đã tồn tại", HttpStatus.BAD_REQUEST);
             }
-            diff.put("username", java.util.Map.of("old", user.getUsername(), "new", newUsername));
+            diff.put("username", createDiffMap(user.getUsername(), newUsername));
             user.setUsername(newUsername);
         }
 
@@ -145,7 +145,7 @@ public class UserService {
             if (userRepository.existsByEmail(newEmail)) {
                 throw new BusinessException("EMAIL_ALREADY_EXISTS", "Email đã tồn tại", HttpStatus.BAD_REQUEST);
             }
-            diff.put("email", java.util.Map.of("old", user.getEmail(), "new", newEmail));
+            diff.put("email", createDiffMap(user.getEmail(), newEmail));
             user.setEmail(newEmail);
         }
 
@@ -157,7 +157,7 @@ public class UserService {
                 throw new BusinessException("INVALID_ROLE", "Vai trò không hợp lệ", HttpStatus.BAD_REQUEST);
             }
             if (user.getRole() != newRole) {
-                diff.put("role", java.util.Map.of("old", user.getRole().name(), "new", newRole.name()));
+                diff.put("role", createDiffMap(user.getRole() != null ? user.getRole().name() : "", newRole.name()));
                 user.setRole(newRole);
             }
         }
@@ -169,16 +169,16 @@ public class UserService {
                 Department newDept = departmentRepository.findById(request.getDepartmentId()).orElseThrow(() ->
                         new BusinessException("DEPARTMENT_NOT_FOUND", "Không tìm thấy phòng ban", HttpStatus.NOT_FOUND)
                 );
-                diff.put("department", java.util.Map.of(
-                        "old", oldDept != null ? oldDept.getName() : "",
-                        "new", newDept.getName()
+                diff.put("department", createDiffMap(
+                        oldDept != null ? oldDept.getName() : "",
+                        newDept.getName()
                 ));
                 userInfo.setDepartment(newDept);
             }
         }
 
         if (request.getIsActive() != null && !request.getIsActive().equals(user.getIsActive())) {
-            diff.put("isActive", java.util.Map.of("old", user.getIsActive(), "new", request.getIsActive()));
+            diff.put("isActive", createDiffMap(user.getIsActive(), request.getIsActive()));
             user.setIsActive(request.getIsActive());
         }
 
@@ -260,5 +260,11 @@ public class UserService {
                 userInfo.getUser().getIsActive(),
                 userInfo.getCareScore()
         );
+    }
+    private java.util.Map<String, String> createDiffMap(Object oldVal, Object newVal) {
+        java.util.Map<String, String> map = new java.util.HashMap<>();
+        map.put("old", oldVal != null ? oldVal.toString() : "");
+        map.put("new", newVal != null ? newVal.toString() : "");
+        return map;
     }
 }

@@ -183,26 +183,40 @@ public class AssetService {
 
     private java.util.Map<String, Object> calculateAssetDiff(Asset oldAsset, AssetRequest request, Category newCategory) {
         java.util.Map<String, Object> diff = new java.util.HashMap<>();
-        if (!oldAsset.getName().equals(request.getName().trim())) {
-            diff.put("name", java.util.Map.of("old", oldAsset.getName(), "new", request.getName().trim()));
+        String oldName = oldAsset.getName() != null ? oldAsset.getName() : "";
+        String newName = request.getName() != null ? request.getName().trim() : "";
+        if (!oldName.equals(newName)) {
+            diff.put("name", createDiffMap(oldName, newName));
         }
         String oldSerial = oldAsset.getSerialNumber() != null ? oldAsset.getSerialNumber() : "";
         String newSerial = request.getSerialNumber() != null ? request.getSerialNumber().trim() : "";
         if (!oldSerial.equals(newSerial)) {
-            diff.put("serialNumber", java.util.Map.of("old", oldSerial, "new", newSerial));
+            diff.put("serialNumber", createDiffMap(oldSerial, newSerial));
         }
         java.math.BigDecimal oldCost = oldAsset.getPurchaseCost() != null ? oldAsset.getPurchaseCost() : java.math.BigDecimal.ZERO;
         java.math.BigDecimal newCost = request.getPurchaseCost() != null ? request.getPurchaseCost() : java.math.BigDecimal.ZERO;
         if (oldCost.compareTo(newCost) != 0) {
-            diff.put("purchaseCost", java.util.Map.of("old", oldCost, "new", newCost));
+            diff.put("purchaseCost", createDiffMap(oldCost, newCost));
         }
         if (request.getStatus() != null && oldAsset.getStatus() != request.getStatus()) {
-            diff.put("status", java.util.Map.of("old", oldAsset.getStatus().name(), "new", request.getStatus().name()));
+            String oldStatus = oldAsset.getStatus() != null ? oldAsset.getStatus().name() : "";
+            diff.put("status", createDiffMap(oldStatus, request.getStatus().name()));
         }
-        if (!oldAsset.getCategory().getId().equals(newCategory.getId())) {
-            diff.put("category", java.util.Map.of("old", oldAsset.getCategory().getName(), "new", newCategory.getName()));
+        UUID oldCatId = oldAsset.getCategory() != null ? oldAsset.getCategory().getId() : null;
+        UUID newCatId = newCategory != null ? newCategory.getId() : null;
+        if (!java.util.Objects.equals(oldCatId, newCatId)) {
+            String oldCatName = oldAsset.getCategory() != null ? oldAsset.getCategory().getName() : "";
+            String newCatName = newCategory != null ? newCategory.getName() : "";
+            diff.put("category", createDiffMap(oldCatName, newCatName));
         }
         return diff;
+    }
+
+    private java.util.Map<String, String> createDiffMap(Object oldVal, Object newVal) {
+        java.util.Map<String, String> map = new java.util.HashMap<>();
+        map.put("old", oldVal != null ? oldVal.toString() : "");
+        map.put("new", newVal != null ? newVal.toString() : "");
+        return map;
     }
 
     @Transactional

@@ -163,7 +163,7 @@ public class AllocationService {
                 "TRANSFER",
                 "ASSET",
                 request.getAssetId(),
-                java.util.Map.of("fromUser", fromUserId.toString(), "toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
+                java.util.Map.of("fromUser", fromUserId != null ? fromUserId.toString() : "", "toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
         );
 
         // Gửi thông báo in-app cho nhân viên mới (không gửi email)
