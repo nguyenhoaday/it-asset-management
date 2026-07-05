@@ -11,6 +11,9 @@ import com.nguyenhoa.itam.allocation.domain.ConfirmationStatus;
 import com.nguyenhoa.itam.asset.application.service.AssetService;
 import com.nguyenhoa.itam.audit.application.service.AuditLogService;
 import com.nguyenhoa.itam.attachment.application.service.AttachmentService;
+import com.nguyenhoa.itam.iam.application.service.UserService;
+import com.nguyenhoa.itam.iam.application.dto.UserProfileResponse;
+import com.nguyenhoa.itam.notification.application.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.nguyenhoa.itam.common.dto.PageResponse;
@@ -30,12 +33,18 @@ public class AllocationService {
     private final AssetService assetService;
     private final AuditLogService auditLogService;
     private final AttachmentService attachmentService;
+    private final UserService userService;
+    private final NotificationService notificationService;
 
-    public AllocationService(AllocationRepository allocationRepository, AssetService assetService, AuditLogService auditLogService, AttachmentService attachmentService) {
+    public AllocationService(AllocationRepository allocationRepository, AssetService assetService,
+                             AuditLogService auditLogService, AttachmentService attachmentService,
+                             UserService userService, NotificationService notificationService) {
         this.allocationRepository = allocationRepository;
         this.assetService = assetService;
         this.auditLogService = auditLogService;
         this.attachmentService = attachmentService;
+        this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -76,6 +85,18 @@ public class AllocationService {
                 request.getAssetId(),
                 java.util.Map.of("toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
         );
+
+        // Gửi thông báo in-app cho nhân viên (không gửi email)
+        try {
+            UserProfileResponse userProfile = userService.getUserProfile(request.getToUserId());
+            String assetName = assetService.getAssetById(request.getAssetId()).getName();
+            notificationService.sendInAppNotification(
+                    userProfile.getEmail(), userProfile.getFullName(),
+                    "Yêu cầu xác nhận cấp phát: " + assetName,
+                    "<p>Bạn vừa được cấp phát thiết bị <b>" + assetName + "</b>. Vào mục <b>Thiết bị của tôi</b> để xác nhận hoặc từ chối.</p>",
+                    "ALLOCATION_PENDING", "Allocation", savedAllocation.getId()
+            );
+        } catch (Exception ignored) {}
 
         return mapToResponse(savedAllocation);
     }
@@ -145,6 +166,18 @@ public class AllocationService {
                 java.util.Map.of("fromUser", fromUserId.toString(), "toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
         );
 
+        // Gửi thông báo in-app cho nhân viên mới (không gửi email)
+        try {
+            UserProfileResponse userProfile = userService.getUserProfile(request.getToUserId());
+            String assetName = assetService.getAssetById(request.getAssetId()).getName();
+            notificationService.sendInAppNotification(
+                    userProfile.getEmail(), userProfile.getFullName(),
+                    "Yêu cầu xác nhận điều chuyển: " + assetName,
+                    "<p>Bạn vừa được điều chuyển thiết bị <b>" + assetName + "</b>. Vào mục <b>Thiết bị của tôi</b> để xác nhận hoặc từ chối.</p>",
+                    "TRANSFER_PENDING", "Allocation", savedAllocation.getId()
+            );
+        } catch (Exception ignored) {}
+
         return mapToResponse(savedAllocation);
     }
 
@@ -176,6 +209,24 @@ public class AllocationService {
                 allocation.getAsset(),
                 java.util.Map.of("allocationId", allocation.getId().toString())
         );
+
+        // Thưởng điểm Care Score cho nhân viên khi xác nhận bàn giao đúng hạn
+        try {
+            userService.addCareScore(userId, 5);
+        } catch (Exception ignored) {}
+
+        // Gửi thông báo in-app cho admin (không gửi email)
+        try {
+            UserProfileResponse adminProfile = userService.getUserProfile(allocation.getCreatedBy());
+            UserProfileResponse employeeProfile = userService.getUserProfile(userId);
+            String assetName = assetService.getAssetById(allocation.getAsset()).getName();
+            notificationService.sendInAppNotification(
+                    adminProfile.getEmail(), adminProfile.getFullName(),
+                    "Đã xác nhận bàn giao: " + assetName,
+                    "<p>Nhân viên <b>" + employeeProfile.getFullName() + "</b> đã <b>xác nhận</b> nhận thiết bị <b>" + assetName + "</b>.</p>",
+                    "ALLOCATION_CONFIRMED", "Allocation", allocation.getId()
+            );
+        } catch (Exception ignored) {}
     }
 
     @Transactional
@@ -210,6 +261,24 @@ public class AllocationService {
                 allocation.getAsset(),
                 java.util.Map.of("allocationId", allocation.getId().toString())
         );
+
+        // Trừ điểm Care Score của nhân viên khi từ chối nhận thiết bị
+        try {
+            userService.addCareScore(userId, -5);
+        } catch (Exception ignored) {}
+
+        // Gửi thông báo in-app cho admin (không gửi email)
+        try {
+            UserProfileResponse adminProfile = userService.getUserProfile(allocation.getCreatedBy());
+            UserProfileResponse employeeProfile = userService.getUserProfile(userId);
+            String assetName = assetService.getAssetById(allocation.getAsset()).getName();
+            notificationService.sendInAppNotification(
+                    adminProfile.getEmail(), adminProfile.getFullName(),
+                    "Đã từ chối bàn giao: " + assetName,
+                    "<p>Nhân viên <b>" + employeeProfile.getFullName() + "</b> đã <b style='color:red;'>từ chối</b> nhận thiết bị <b>" + assetName + "</b>. Trạng thái thiết bị đã được hoàn tác.</p>",
+                    "ALLOCATION_REJECTED", "Allocation", allocation.getId()
+            );
+        } catch (Exception ignored) {}
     }
 
     @Transactional(readOnly = true)

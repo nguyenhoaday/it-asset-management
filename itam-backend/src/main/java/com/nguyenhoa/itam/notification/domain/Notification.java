@@ -10,7 +10,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "notifications", indexes = {
+    @Index(name = "idx_notifications_recipient_status_sent", columnList = "recipient_email, status, sent_at DESC"),
+    @Index(name = "idx_notifications_sent_at", columnList = "sent_at"),
+    @Index(name = "idx_notifications_entity", columnList = "related_entity_type, related_entity_id")
+})
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
