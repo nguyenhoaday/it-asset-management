@@ -126,13 +126,17 @@ public class InventoryController {
         List<UUID> matchingAssetIds = new java.util.ArrayList<>();
         boolean hasSearch = search != null && !search.trim().isEmpty();
         if (hasSearch) {
-            List<AssetResponse> allAssets = assetService.getAllAssetsForReport();
-            String query = search.trim().toLowerCase();
-            matchingAssetIds = allAssets.stream()
-                    .filter(a -> a.getName().toLowerCase().contains(query) || 
-                                 a.getAssetCode().toLowerCase().contains(query))
-                    .map(AssetResponse::getId)
+            matchingAssetIds = assetService.getAssets(null, null, search, null, PageRequest.of(0, 1000))
+                    .getContent().stream()
+                    .map(com.nguyenhoa.itam.asset.application.dto.AssetResponse::getId)
                     .collect(Collectors.toList());
+            
+            if (matchingAssetIds.isEmpty()) {
+                PageResponse<InventoryItemResponse> emptyPage = new PageResponse<>(
+                        new org.springframework.data.domain.PageImpl<>(Collections.emptyList(), pageable, 0)
+                );
+                return ResponseEntity.ok(ApiResponse.success(emptyPage));
+            }
         }
 
         PageResponse<InventoryItemResponse> itemsPage = inventoryService.getInventoryItemsPaginated(

@@ -11,6 +11,10 @@ import com.nguyenhoa.itam.audit.application.service.AuditLogService;
 import com.nguyenhoa.itam.attachment.application.service.AttachmentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -49,11 +54,49 @@ public class AssetService {
 
     // Tìm kiếm và phân trang
     @Transactional(readOnly = true)
-    public PageResponse<AssetResponse> getAssets(UUID categoryId, AssetStatus status, String search, Pageable pageable) {
-        Page<Asset> assetPage = assetRepository.searchAssets(categoryId, status, search, pageable);
+    public PageResponse<AssetResponse> getAssets(UUID categoryId, AssetStatus status, String search, Boolean warrantyExpiring, Pageable pageable) {
+        Specification<Asset> spec = (root, query, cb) -> {
+            if (Long.class != query.getResultType() && long.class != query.getResultType()) {
+                root.fetch("category", JoinType.LEFT);
+            }
+            
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isNull(root.get("deletedAt")));
 
-        // Ánh xạ Page<Asset> sang Page<AssetResponse> bằng cách dùng hàm map của Spring Data
-        Page<AssetResponse> responsePage = assetPage.map(this::mapToResponse);
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (search != null && !search.trim().isEmpty()) {
+                String likeSearch = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("name")), likeSearch),
+                    cb.like(cb.lower(root.get("assetCode")), likeSearch),
+                    cb.like(cb.lower(root.get("serialNumber")), likeSearch)
+                ));
+            }
+            if (Boolean.TRUE.equals(warrantyExpiring)) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("warrantyExpiry"), LocalDate.now().plusDays(30)));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Asset> assetPage = assetRepository.findAll(spec, pageable);
+
+        List<UUID> assetIds = assetPage.getContent().stream().map(Asset::getId).toList();
+        Map<UUID, String> holderMap = new java.util.HashMap<>();
+        if (!assetIds.isEmpty()) {
+            assetCurrentHolderRepository.findAllById(assetIds).forEach(holder -> {
+                if (holder.getFullName() != null) {
+                    holderMap.put(holder.getAssetId(), holder.getFullName());
+                }
+            });
+        }
+
+        Page<AssetResponse> responsePage = assetPage.map(asset -> mapToResponse(asset, holderMap));
         return new PageResponse<>(responsePage);
     }
 
@@ -184,6 +227,15 @@ public class AssetService {
     }
 
     private AssetResponse mapToResponse(Asset asset) {
+        String assignedTo = assetCurrentHolderRepository.findById(asset.getId())
+                .map(AssetCurrentHolder::getFullName)
+                .orElse(null);
+        return mapToResponse(asset, java.util.Collections.singletonMap(asset.getId(), assignedTo));
+    }
+
+    private AssetResponse mapToResponse(Asset asset, Map<UUID, String> holderMap) {
+        String assignedTo = holderMap.get(asset.getId());
+
         return new AssetResponse(asset.getId(),
                 asset.getAssetCode(),
                 asset.getName(),
@@ -200,7 +252,8 @@ public class AssetService {
                 asset.getCreatedBy(),
                 asset.getCreatedAt(),
                 asset.getUpdatedAt(),
-                asset.getCurrency()
+                asset.getCurrency(),
+                assignedTo
         );
     }
 
@@ -327,8 +380,16 @@ public class AssetService {
 
     @Transactional(readOnly = true)
     public List<AssetResponse> getAllAssetsForReport() {
-        return assetRepository.findByDeletedAtIsNull().stream()
-                .map(this::mapToResponse)
+        List<Asset> assets = assetRepository.findByDeletedAtIsNull();
+        List<UUID> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<UUID, String> holderMap = assetCurrentHolderRepository.findAllById(assetIds).stream()
+                .collect(Collectors.toMap(
+                        AssetCurrentHolder::getAssetId, 
+                        ach -> ach.getFullName() != null ? ach.getFullName() : (ach.getDepartmentId() != null ? "Phòng ban" : "Không xác định")
+                ));
+
+        return assets.stream()
+                .map(asset -> mapToResponse(asset, holderMap))
                 .collect(Collectors.toList());
     }
 
@@ -337,8 +398,16 @@ public class AssetService {
         if (ids == null || ids.isEmpty()) {
             return java.util.Collections.emptyList();
         }
-        return assetRepository.findByDeletedAtIsNullAndIdIn(ids).stream()
-                .map(this::mapToResponse)
+        List<Asset> assets = assetRepository.findByDeletedAtIsNullAndIdIn(ids);
+        List<UUID> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<UUID, String> holderMap = assetCurrentHolderRepository.findAllById(assetIds).stream()
+                .collect(Collectors.toMap(
+                        AssetCurrentHolder::getAssetId, 
+                        ach -> ach.getFullName() != null ? ach.getFullName() : (ach.getDepartmentId() != null ? "Phòng ban" : "Không xác định")
+                ));
+
+        return assets.stream()
+                .map(asset -> mapToResponse(asset, holderMap))
                 .collect(Collectors.toList());
     }
 

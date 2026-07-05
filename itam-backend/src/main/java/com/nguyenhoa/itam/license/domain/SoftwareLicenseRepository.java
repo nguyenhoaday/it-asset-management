@@ -6,19 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 import java.util.Optional;
 import java.util.UUID;
 
-public interface SoftwareLicenseRepository extends JpaRepository<SoftwareLicense, UUID> {
+public interface SoftwareLicenseRepository extends JpaRepository<SoftwareLicense, UUID>, JpaSpecificationExecutor<SoftwareLicense> {
     Optional<SoftwareLicense> findByIdAndIsActiveTrue(UUID id);
     boolean existsByLicenseCode(String licenseCode);
     boolean existsByLicenseCodeAndIdNot(String licenseCode, UUID id);
 
-    @Query("""
-        SELECT sl FROM SoftwareLicense sl
-        WHERE sl.isActive = true
-        AND (CAST(:search AS string) IS NULL OR LOWER(sl.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
-            OR LOWER(sl.licenseCode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
-    """)
-    Page<SoftwareLicense> searchLicense(@Param("search") String search, Pageable pageable);
 }

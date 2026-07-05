@@ -14,6 +14,9 @@ import com.nguyenhoa.itam.license.domain.SoftwareLicenseRepository;
 import com.nguyenhoa.itam.attachment.application.service.AttachmentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -129,9 +132,57 @@ public class SoftwareLicenseService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<SoftwareLicenseResponse> getLicenses(String search, Pageable pageable) {
-        Page<SoftwareLicense> page = softwareLicenseRepository.searchLicense(search, pageable);
-        Page<SoftwareLicenseResponse> mappedPage = page.map(this::mapToResponse);
+    public PageResponse<SoftwareLicenseResponse> getLicenses(String search, String status, Pageable pageable) {
+        Specification<SoftwareLicense> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isTrue(root.get("isActive")));
+            
+            if (search != null && !search.trim().isEmpty()) {
+                String like = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("name")), like),
+                    cb.like(cb.lower(root.get("licenseCode")), like)
+                ));
+            }
+            
+            if (status != null && !status.trim().isEmpty()) {
+                LocalDate today = LocalDate.now();
+                if (status.equalsIgnoreCase("VALID")) {
+                    predicates.add(cb.or(
+                        cb.isNull(root.get("expirationDate")),
+                        cb.greaterThan(root.get("expirationDate"), today.plusDays(30))
+                    ));
+                } else if (status.equalsIgnoreCase("EXPIRING_SOON")) {
+                    predicates.add(cb.and(
+                        cb.isNotNull(root.get("expirationDate")),
+                        cb.greaterThanOrEqualTo(root.get("expirationDate"), today),
+                        cb.lessThanOrEqualTo(root.get("expirationDate"), today.plusDays(30))
+                    ));
+                } else if (status.equalsIgnoreCase("EXPIRED")) {
+                    predicates.add(cb.and(
+                        cb.isNotNull(root.get("expirationDate")),
+                        cb.lessThan(root.get("expirationDate"), today)
+                    ));
+                }
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<SoftwareLicense> page = softwareLicenseRepository.findAll(spec, pageable);
+        List<UUID> licenseIds = page.getContent().stream().map(SoftwareLicense::getId).collect(Collectors.toList());
+        
+        java.util.Map<UUID, Long> usedSeatsMap = new java.util.HashMap<>();
+        if (!licenseIds.isEmpty()) {
+            List<Object[]> counts = licenseAllocationRepository.countActiveAllocationsByLicenseIds(licenseIds);
+            for (Object[] count : counts) {
+                usedSeatsMap.put((UUID) count[0], (Long) count[1]);
+            }
+        }
+
+        Page<SoftwareLicenseResponse> mappedPage = page.map(license -> {
+            long usedSeats = usedSeatsMap.getOrDefault(license.getId(), 0L);
+            return mapToResponse(license, usedSeats);
+        });
         return new PageResponse<>(mappedPage);
     }
 
@@ -212,6 +263,10 @@ public class SoftwareLicenseService {
 
     private SoftwareLicenseResponse mapToResponse(SoftwareLicense license) {
         long usedSeats = licenseAllocationRepository.countByLicenseIdAndReturnedAtIsNull(license.getId());
+        return mapToResponse(license, usedSeats);
+    }
+
+    private SoftwareLicenseResponse mapToResponse(SoftwareLicense license, long usedSeats) {
         int availableSeats = Math.max(0, license.getTotalSeats() - (int) usedSeats);
 
         SoftwareLicenseResponse response = new SoftwareLicenseResponse();

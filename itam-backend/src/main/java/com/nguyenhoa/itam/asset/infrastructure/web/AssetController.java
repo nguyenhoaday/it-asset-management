@@ -1,7 +1,9 @@
 package com.nguyenhoa.itam.asset.infrastructure.web;
 
+import com.nguyenhoa.itam.asset.application.dto.AssetHealthDto;
 import com.nguyenhoa.itam.asset.application.dto.AssetRequest;
 import com.nguyenhoa.itam.asset.application.dto.AssetResponse;
+import com.nguyenhoa.itam.asset.application.service.AssetHealthService;
 import com.nguyenhoa.itam.asset.application.service.AssetService;
 import com.nguyenhoa.itam.asset.domain.AssetStatus;
 import com.nguyenhoa.itam.common.dto.ApiResponse;
@@ -23,9 +25,11 @@ import java.util.UUID;
 @RequestMapping("/api/v1/assets")
 public class AssetController {
     private final AssetService assetService;
+    private final AssetHealthService assetHealthService;
 
-    public AssetController(AssetService assetService) {
+    public AssetController(AssetService assetService, AssetHealthService assetHealthService) {
         this.assetService = assetService;
+        this.assetHealthService = assetHealthService;
     }
 
     //  danh sách tài sản phân trang, lọc theo danh mục, trạng thái và tìm kiếm
@@ -33,10 +37,11 @@ public class AssetController {
     public ResponseEntity<ApiResponse<PageResponse<AssetResponse>>> getAssets(@RequestParam(required = false) UUID categoryId,
                                                                  @RequestParam(required = false) AssetStatus status,
                                                                  @RequestParam(required = false) String search,
+                                                                 @RequestParam(required = false) Boolean warrantyExpiring,
                                                                  @RequestParam(defaultValue = "0") int page,
                                                                  @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<AssetResponse> pageResponse = assetService.getAssets(categoryId, status, search, pageable);
+        PageResponse<AssetResponse> pageResponse = assetService.getAssets(categoryId, status, search, warrantyExpiring, pageable);
         return ResponseEntity.ok(ApiResponse.success(pageResponse));
     }
 
@@ -44,6 +49,12 @@ public class AssetController {
     public ResponseEntity<ApiResponse<AssetResponse>> getAssetById(@PathVariable UUID id) {
         AssetResponse assetResponse = assetService.getAssetById(id);
         return ResponseEntity.ok(ApiResponse.success(assetResponse));
+    }
+
+    @GetMapping("/{id}/health")
+    public ResponseEntity<ApiResponse<AssetHealthDto>> getAssetHealth(@PathVariable UUID id) {
+        AssetHealthDto healthDto = assetHealthService.calculateHealth(id);
+        return ResponseEntity.ok(ApiResponse.success(healthDto));
     }
 
     @PostMapping

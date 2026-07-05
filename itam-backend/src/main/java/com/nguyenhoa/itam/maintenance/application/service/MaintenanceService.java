@@ -1,6 +1,7 @@
 package com.nguyenhoa.itam.maintenance.application.service;
 
 import com.nguyenhoa.itam.asset.application.service.AssetService;
+import com.nguyenhoa.itam.iam.application.service.UserService;
 import com.nguyenhoa.itam.common.exception.BusinessException;
 import com.nguyenhoa.itam.maintenance.application.dto.CompleteMaintenanceRequest;
 import com.nguyenhoa.itam.maintenance.application.dto.MaintenanceLogRequest;
@@ -20,10 +21,17 @@ import java.util.stream.Collectors;
 public class MaintenanceService {
     private final MaintenanceLogRepository maintenanceLogRepository;
     private final AssetService assetService;
+    private final UserService userService;
 
-    public MaintenanceService(MaintenanceLogRepository maintenanceLogRepository, AssetService assetService) {
+    public MaintenanceService(MaintenanceLogRepository maintenanceLogRepository, AssetService assetService, UserService userService) {
         this.maintenanceLogRepository = maintenanceLogRepository;
         this.assetService = assetService;
+        this.userService = userService;
+    }
+
+    @Transactional(readOnly = true)
+    public long getMaintenanceCountByAsset(UUID assetId) {
+        return maintenanceLogRepository.countByAsset(assetId);
     }
 
     // Bắt đầu bảo trì một thiết bị
@@ -39,6 +47,14 @@ public class MaintenanceService {
             throw new BusinessException("ASSET_IN_MAINTENANCE",
                     "Thiết bị này đang trong quá trình bảo trì rồi",
                     HttpStatus.CONFLICT);
+        }
+
+        // Nếu thiết bị đang do nhân viên nắm giữ, trừ điểm Care Score vì làm hỏng/gặp sự cố
+        UUID currentHolderId = assetService.getAssetCurrentHolderId(assetId);
+        if (currentHolderId != null) {
+            try {
+                userService.addCareScore(currentHolderId, -10);
+            } catch (Exception ignored) {}
         }
 
         MaintenanceLog maintenanceLog = new MaintenanceLog();

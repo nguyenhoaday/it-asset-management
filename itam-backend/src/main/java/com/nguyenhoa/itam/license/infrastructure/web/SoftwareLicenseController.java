@@ -33,10 +33,11 @@ public class SoftwareLicenseController {
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
     public ResponseEntity<ApiResponse<PageResponse<SoftwareLicenseResponse>>> getLicenses(@RequestParam(required = false) String search,
+                                                                                          @RequestParam(required = false) String status,
                                                                                           @RequestParam(defaultValue = "0") int page,
                                                                                           @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<SoftwareLicenseResponse> response = softwareLicenseService.getLicenses(search, pageable);
+        PageResponse<SoftwareLicenseResponse> response = softwareLicenseService.getLicenses(search, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

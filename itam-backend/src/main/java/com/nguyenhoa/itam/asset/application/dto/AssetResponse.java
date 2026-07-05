@@ -26,8 +26,9 @@ public class AssetResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private String currency;
+    private String assignedTo;
 
-    public AssetResponse(UUID id, String assetCode, String name, UUID categoryId, String categoryName, String serialNumber, LocalDate purchaseDate, BigDecimal purchaseCost, String purchaseInvoiceUrl, LocalDate warrantyExpiry, AssetStatus status, Map<String, Object> specification, String qrCodeUrl, UUID createdBy, Instant createdAt, Instant updatedAt, String currency) {
+    public AssetResponse(UUID id, String assetCode, String name, UUID categoryId, String categoryName, String serialNumber, LocalDate purchaseDate, BigDecimal purchaseCost, String purchaseInvoiceUrl, LocalDate warrantyExpiry, AssetStatus status, Map<String, Object> specification, String qrCodeUrl, UUID createdBy, Instant createdAt, Instant updatedAt, String currency, String assignedTo) {
         this.id = id;
         this.assetCode = assetCode;
         this.name = name;
@@ -45,6 +46,7 @@ public class AssetResponse {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.currency = currency;
+        this.assignedTo = assignedTo;
     }
 
 
@@ -182,5 +184,13 @@ public class AssetResponse {
 
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    public String getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(String assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }

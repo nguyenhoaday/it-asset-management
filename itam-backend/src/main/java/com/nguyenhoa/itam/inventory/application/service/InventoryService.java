@@ -6,6 +6,8 @@ import com.nguyenhoa.itam.inventory.application.dto.*;
 import com.nguyenhoa.itam.inventory.domain.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 import com.nguyenhoa.itam.common.dto.PageResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -182,12 +184,23 @@ public class InventoryService {
         InventorySession session = inventorySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new BusinessException("SESSION_NOT_FOUND", "Không tìm thấy đợt kiểm kê", HttpStatus.NOT_FOUND));
 
-        long totalAssets = assetService.countActiveAssets();
-        long found = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.FOUND);
-        long missing = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.MISSING);
-        long damaged = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.DAMAGED);
+        long found      = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.FOUND);
+        long missing    = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.MISSING);
+        long damaged    = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.DAMAGED);
         long unverified = inventoryItemRepository.countBySessionIdAndCheckedStatus(sessionId, CheckedStatus.UNVERIFIED);
+
+        // scannedCount = số tài sản đã được kiểm tra thực tế (không tính UNVERIFIED tự động)
         long scannedCount = found + missing + damaged;
+
+        // totalAssets = tổng tài sản được tracking trong phiên
+        // Nếu session đã CLOSED: = scanned + unverified (toàn bộ bản ghi trong phiên)
+        // Nếu session đang ACTIVE: dùng tổng tài sản đang active trong hệ thống
+        long totalAssets;
+        if (session.getStatus() == InventorySessionStatus.CLOSED) {
+            totalAssets = scannedCount + unverified;
+        } else {
+            totalAssets = assetService.countActiveAssets();
+        }
 
         return new InventoryReportResponse(session.getId(),
                 session.getTitle(),
@@ -228,7 +241,18 @@ public class InventoryService {
 
     @Transactional(readOnly = true)
     public PageResponse<InventoryItemResponse> getInventoryItemsPaginated(UUID sessionId, CheckedStatus status, boolean hasSearch, List<UUID> assetIds, Pageable pageable) {
-        Page<InventoryItem> itemPage = inventoryItemRepository.findBySessionIdAndFilters(sessionId, status, hasSearch, assetIds, pageable);
+        Specification<InventoryItem> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("session").get("id"), sessionId));
+            if (status != null) {
+                predicates.add(cb.equal(root.get("checkedStatus"), status));
+            }
+            if (hasSearch && assetIds != null && !assetIds.isEmpty()) {
+                predicates.add(root.get("asset").in(assetIds));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<InventoryItem> itemPage = inventoryItemRepository.findAll(spec, pageable);
         Page<InventoryItemResponse> responsePage = itemPage.map(this::mapToItemResponse);
         return new PageResponse<>(responsePage);
     }
