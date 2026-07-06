@@ -74,7 +74,7 @@ const MyAssetListPage = () => {
   };
 
   const formatExpDate = (dateString) => {
-    if (!dateString) return t('licenses.statusUnknown') || 'Vĩnh viễn';
+    if (!dateString) return t('licenses.statusUnknown');
     try {
       return new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
         year: 'numeric', month: 'short', day: 'numeric'
@@ -89,7 +89,7 @@ const MyAssetListPage = () => {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-900/50">
           <ShieldCheck className="w-3.5 h-3.5" />
-          {t('licenses.valid') || 'Vĩnh viễn'}
+          {t('licenses.statusValid')}
         </span>
       );
     }
@@ -101,21 +101,21 @@ const MyAssetListPage = () => {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-900/50">
           <AlertTriangle className="w-3.5 h-3.5" />
-          {t('licenses.expired') || 'Đã hết hạn'}
+          {t('licenses.statusExpired')}
         </span>
       );
     } else if (diffDays <= 30) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-900/50">
           <Clock className="w-3.5 h-3.5" />
-          {t('licenses.expiringSoon') || 'Sắp hết hạn'} ({diffDays} ngày)
+          {t('licenses.statusExpiringSoon')} ({diffDays}d)
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-900/50">
         <ShieldCheck className="w-3.5 h-3.5" />
-        {t('licenses.valid') || 'Còn hạn'}
+        {t('licenses.statusValid')}
       </span>
     );
   };
@@ -234,12 +234,12 @@ const MyAssetListPage = () => {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-gray-50/50 dark:bg-slate-800/50 text-gray-500 dark:text-gray-400 font-medium border-b border-gray-200 dark:border-gray-800">
                     <tr>
-                      <th className="px-6 py-4">{t('licenses.nameLabel') || 'Tên phần mềm'}</th>
-                      <th className="px-6 py-4">{t('licenses.codeLabel') || 'Mã gói'}</th>
-                      <th className="px-6 py-4">{t('licenses.licenseKeyLabel') || 'Mã kích hoạt (Key)'}</th>
-                      <th className="px-6 py-4">{t('myAssets.assignedAt')}</th>
-                      <th className="px-6 py-4">{t('licenses.expirationDateLabel') || 'Ngày hết hạn'}</th>
-                      <th className="px-6 py-4">{t('myAssets.notes')}</th>
+                      <th className="px-6 py-4">{t('licenses.nameLabel')}</th>
+                      <th className="px-6 py-4">{t('licenses.codeLabel')}</th>
+                      <th className="px-6 py-4">{t('licenses.licenseKeyLabel')}</th>
+                      <th className="px-6 py-4">{t('licenses.allocatedAt')}</th>
+                      <th className="px-6 py-4">{t('licenses.expirationDateLabel')}</th>
+                      <th className="px-6 py-4">{t('licenses.notes')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

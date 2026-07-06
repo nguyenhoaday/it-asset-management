@@ -252,7 +252,7 @@ public class SoftwareLicenseService {
 
     @Transactional(readOnly = true)
     public List<MySoftwareLicenseResponse> getMySoftwareLicenses(UUID userId) {
-        List<LicenseAllocation> allocations = licenseAllocationRepository.findByUserIdAndReturnedAtIsNullOrderByAllocatedAtDesc(userId);
+        List<LicenseAllocation> allocations = licenseAllocationRepository.findByUserAndReturnedAtIsNullOrderByAllocatedAtDesc(userId);
         return allocations.stream().map(a -> new MySoftwareLicenseResponse(
                 a.getId(),
                 a.getLicense().getId(),
