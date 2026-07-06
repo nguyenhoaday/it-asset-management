@@ -5,6 +5,7 @@ import com.nguyenhoa.itam.common.dto.PageResponse;
 import com.nguyenhoa.itam.iam.api.UserPrincipal;
 import com.nguyenhoa.itam.license.application.dto.LicenseAllocationRequest;
 import com.nguyenhoa.itam.license.application.dto.LicenseAllocationResponse;
+import com.nguyenhoa.itam.license.application.dto.MySoftwareLicenseResponse;
 import com.nguyenhoa.itam.license.application.dto.SoftwareLicenseRequest;
 import com.nguyenhoa.itam.license.application.dto.SoftwareLicenseResponse;
 import com.nguyenhoa.itam.license.application.service.SoftwareLicenseService;
@@ -99,6 +100,14 @@ public class SoftwareLicenseController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
     public ResponseEntity<ApiResponse<List<LicenseAllocationResponse>>> getLicenseAllocations(@PathVariable("id") UUID licenseId) {
         List<LicenseAllocationResponse> response = softwareLicenseService.getLicenseAllocations(licenseId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // Lấy danh sách bản quyền phần mềm được phân bổ cho cá nhân người dùng hiện tại
+    @GetMapping("/my")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<MySoftwareLicenseResponse>>> getMyLicenses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        List<MySoftwareLicenseResponse> response = softwareLicenseService.getMySoftwareLicenses(userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

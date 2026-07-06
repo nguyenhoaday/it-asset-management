@@ -5,6 +5,7 @@ import com.nguyenhoa.itam.common.exception.BusinessException;
 import com.nguyenhoa.itam.iam.application.service.UserService;
 import com.nguyenhoa.itam.license.application.dto.LicenseAllocationRequest;
 import com.nguyenhoa.itam.license.application.dto.LicenseAllocationResponse;
+import com.nguyenhoa.itam.license.application.dto.MySoftwareLicenseResponse;
 import com.nguyenhoa.itam.license.application.dto.SoftwareLicenseRequest;
 import com.nguyenhoa.itam.license.application.dto.SoftwareLicenseResponse;
 import com.nguyenhoa.itam.license.domain.LicenseAllocation;
@@ -247,6 +248,21 @@ public class SoftwareLicenseService {
 
         List<LicenseAllocation> allocations = licenseAllocationRepository.findByLicenseIdOrderByAllocatedAtDesc(licenseId);
         return allocations.stream().map(this::mapToAllocationResponse).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<MySoftwareLicenseResponse> getMySoftwareLicenses(UUID userId) {
+        List<LicenseAllocation> allocations = licenseAllocationRepository.findByUserIdAndReturnedAtIsNullOrderByAllocatedAtDesc(userId);
+        return allocations.stream().map(a -> new MySoftwareLicenseResponse(
+                a.getId(),
+                a.getLicense().getId(),
+                a.getLicense().getLicenseCode(),
+                a.getLicense().getName(),
+                a.getLicense().getLicenseKey(),
+                a.getLicense().getExpirationDate(),
+                a.getAllocatedAt(),
+                a.getNotes()
+        )).toList();
     }
 
     private LicenseAllocationResponse mapToAllocationResponse(LicenseAllocation allocation) {

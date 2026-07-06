@@ -312,6 +312,12 @@
     "rejectTitle": "Từ chối nhận thiết bị",
     "rejectMessage": "Bạn có chắc chắn muốn từ chối nhận thiết bị \"{{name}}\" này không? Hành động này sẽ trả thiết bị về kho.",
     "noData": "Bạn hiện chưa được bàn giao thiết bị nào.",
+    "noSoftwareData": "Bạn hiện chưa được phân bổ bản quyền phần mềm nào.",
+    "tabHardware": "Thiết bị phần cứng",
+    "tabSoftware": "Bản quyền phần mềm",
+    "softwareSubtitle": "Danh sách các bản quyền phần mềm và mã kích hoạt (Key) được cấp riêng cho bạn",
+    "copyKey": "Sao chép Key",
+    "copySuccess": "Đã sao chép mã Key vào bộ nhớ tạm!",
     "actions": "Thao tác"
   },
   "requests": {

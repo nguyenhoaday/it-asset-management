@@ -312,6 +312,12 @@
     "rejectTitle": "Reject Asset Receipt",
     "rejectMessage": "Are you sure you want to reject receipt of the asset \"{{name}}\"? This will return the asset to inventory.",
     "noData": "You currently have no assets assigned.",
+    "noSoftwareData": "You currently have no software licenses assigned.",
+    "tabHardware": "Hardware Assets",
+    "tabSoftware": "Software Licenses",
+    "softwareSubtitle": "List of software licenses and activation keys allocated specifically to you",
+    "copyKey": "Copy Key",
+    "copySuccess": "License key copied to clipboard!",
     "actions": "Actions"
   },
   "requests": {

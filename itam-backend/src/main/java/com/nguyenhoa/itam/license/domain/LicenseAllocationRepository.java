@@ -18,4 +18,7 @@ public interface LicenseAllocationRepository extends JpaRepository<LicenseAlloca
 
     @EntityGraph(attributePaths = {"license"})
     List<LicenseAllocation> findByLicenseIdOrderByAllocatedAtDesc(UUID licenseId);
+
+    @EntityGraph(attributePaths = {"license"})
+    List<LicenseAllocation> findByUserIdAndReturnedAtIsNullOrderByAllocatedAtDesc(UUID userId);
 }
