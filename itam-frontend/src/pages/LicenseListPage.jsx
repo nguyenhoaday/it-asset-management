@@ -204,7 +204,7 @@ const LicenseListPage = () => {
       };
 
       if (editingLicense) {
-        await axiosClient.patch(`/licenses/${editingLicense.id}`, payload);
+        await axiosClient.put(`/licenses/${editingLicense.id}`, payload);
       } else {
         await axiosClient.post('/licenses', payload);
       }

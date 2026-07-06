@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, Edit, Package, QrCode, ClipboardList, Info,
-  Settings, UserCheck, ArrowRightLeft, PenTool, CheckCircle2
+  Settings, UserCheck, ArrowRightLeft, PenTool, CheckCircle2,
+  User, FileText, ExternalLink
 } from 'lucide-react';
-import axiosClient from '../services/axiosClient';
+import axiosClient, { getHostUrl } from '../services/axiosClient';
 import AllocationModal from '../components/AllocationModal';
 import MaintenanceModal from '../components/MaintenanceModal';
 import HealthScoreWidget from '../components/HealthScoreWidget';
@@ -45,6 +46,13 @@ const AssetDetailPage = () => {
       case 'RETIRED': return 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:border-gray-600';
       default: return 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:border-gray-600';
     }
+  };
+
+  const getFileUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const host = getHostUrl();
+    return host ? host + path : path;
   };
 
   const fetchAssetData = useCallback(async () => {
@@ -345,6 +353,17 @@ const AssetDetailPage = () => {
                       {t(`status.${asset.status}`)}
                     </span>
                   </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('assetDetail.assignedTo')}</p>
+                    {asset.assignedTo ? (
+                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-sm">
+                        <User className="w-4 h-4 shrink-0 text-indigo-500" />
+                        <span>{asset.assignedTo}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400 text-sm italic">{t('assetDetail.unassigned')}</span>
+                    )}
+                  </div>
                   <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('assetDetail.serialNumber')}</p>
                     <p className="font-mono text-sm text-gray-900 dark:text-white">{asset.serialNumber || '-'}</p>
@@ -370,6 +389,23 @@ const AssetDetailPage = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('assetDetail.warrantyExpiry')}</p>
                     <p className="text-gray-900 dark:text-white">{asset.warrantyExpiry ? new Date(asset.warrantyExpiry).toLocaleDateString(currentLocale) : '-'}</p>
                   </div>
+                  {asset.purchaseInvoiceUrl && (
+                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('assetDetail.invoiceFile')}</p>
+                      <a
+                        href={getFileUrl(asset.purchaseInvoiceUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-medium bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-900/50 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors w-full justify-between"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <span className="truncate">{t('assetDetail.viewFile')}</span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

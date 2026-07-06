@@ -74,7 +74,7 @@ const CategoryListPage = () => {
     setSaving(true);
     try {
       const payload = { name: formData.name, code: formData.code, description: formData.description, specificationSchema: parsedSchema };
-      if (editingCategory) { await axiosClient.patch(`/categories/${editingCategory.id}`, payload); }
+      if (editingCategory) { await axiosClient.put(`/categories/${editingCategory.id}`, payload); }
       else { await axiosClient.post('/categories', payload); }
       showToast(t('categories.saveSuccess'), 'success');
       setIsModalOpen(false);

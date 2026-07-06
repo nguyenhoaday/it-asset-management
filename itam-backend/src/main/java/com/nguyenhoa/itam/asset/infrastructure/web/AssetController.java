@@ -65,7 +65,7 @@ public class AssetController {
 
     }
 
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
     public ResponseEntity<ApiResponse<AssetResponse>> updateAsset(@PathVariable UUID id, @Valid @RequestBody AssetRequest assetRequest, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         AssetResponse assetResponse = assetService.updateAsset(id, assetRequest, userPrincipal.getId());

@@ -149,6 +149,10 @@
     "noSpecifications": "No specifications added",
     "downloadQr": "Download QR Code",
     "printQr": "Print QR Code",
+    "assignedTo": "Current Holder",
+    "unassigned": "Unassigned (In Stock)",
+    "invoiceFile": "Invoice Attachment",
+    "viewFile": "View Attachment",
     "loading": "Loading device details...",
     "notFound": "Device not found"
   },

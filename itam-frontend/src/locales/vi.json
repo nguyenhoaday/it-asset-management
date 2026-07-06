@@ -149,6 +149,10 @@
     "noSpecifications": "Không có thông số kỹ thuật nào được thêm",
     "downloadQr": "Tải xuống mã QR",
     "printQr": "In mã QR",
+    "assignedTo": "Người đang sử dụng",
+    "unassigned": "Chưa cấp phát (Trong kho)",
+    "invoiceFile": "Hóa đơn đính kèm",
+    "viewFile": "Xem tệp đính kèm",
     "loading": "Đang tải chi tiết thiết bị...",
     "notFound": "Không tìm thấy thiết bị"
   },

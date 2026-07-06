@@ -35,7 +35,7 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(categoryResponse));
     }
 
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(@PathVariable UUID id, @Valid @RequestBody CategoryRequest categoryRequest) {
         CategoryResponse categoryResponse = categoryService.updateCategory(id, categoryRequest);

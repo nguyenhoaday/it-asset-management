@@ -201,7 +201,7 @@ const UserManagementPage = () => {
           departmentId: formData.departmentId || null,
           isActive: formData.isActive
         };
-        await axiosClient.patch(`/users/${editingUser.id}`, updatePayload);
+        await axiosClient.put(`/users/${editingUser.id}`, updatePayload);
         showToast(t('users.updateSuccess'), 'success');
       } else {
         // Create mode

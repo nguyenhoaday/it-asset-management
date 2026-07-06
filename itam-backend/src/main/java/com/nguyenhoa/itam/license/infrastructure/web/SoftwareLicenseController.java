@@ -59,7 +59,7 @@ public class SoftwareLicenseController {
     }
 
     // Cập nhật thông tin license
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'IT_STAFF')")
     public ResponseEntity<ApiResponse<SoftwareLicenseResponse>> updateLicense(@PathVariable UUID id,
                                                                  @Valid @RequestBody SoftwareLicenseRequest request) {

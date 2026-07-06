@@ -50,7 +50,13 @@ public class AttachmentService {
 
     @Transactional
     public void updateEntityIdByUrl(String fileUrl, UUID entityId) {
-        attachmentRepository.findByFileUrl(fileUrl).ifPresent(attachment -> {
+        if (fileUrl == null) return;
+        String searchUrl = fileUrl;
+        int idx = fileUrl.indexOf("/api/v1/attachments/files/");
+        if (idx != -1) {
+            searchUrl = fileUrl.substring(idx);
+        }
+        attachmentRepository.findByFileUrl(searchUrl).ifPresent(attachment -> {
             attachment.setEntityId(entityId);
             attachmentRepository.save(attachment);
         });
