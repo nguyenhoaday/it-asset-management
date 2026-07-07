@@ -18,10 +18,10 @@ import RequestAssetPage from "./pages/RequestAssetPage";
 import InventoryListPage from "./pages/InventoryListPage";
 import InventoryScanPage from "./pages/InventoryScanPage";
 import InventoryReportPage from "./pages/InventoryReportPage";
-import MaintenanceReportPage from "./pages/MaintenanceReportPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import SettingsPage from "./pages/SettingsPage";
+import SystemConfigPage from "./pages/SystemConfigPage";
 import { ToastProvider } from "./context/ToastContext";
 import { NotificationProvider } from "./context/NotificationContext";
 
@@ -57,13 +57,13 @@ function App() {
                                     <Route path="/requests" element={<RequestListPage />} />
                                     <Route path="/inventory" element={<InventoryListPage />} />
                                     <Route path="/inventory/:id/report" element={<InventoryReportPage />} />
-                                    <Route path="/reports/maintenances" element={<MaintenanceReportPage />} />
                                 </Route>
 
                                 {/* Route quản trị (SUPER_ADMIN) */}
                                 <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
                                     <Route path="/users" element={<UserManagementPage />} />
                                     <Route path="/audit-logs" element={<AuditLogsPage />} />
+                                    <Route path="/system-config" element={<SystemConfigPage />} />
                                 </Route>
                             </Route>
                         </Route>

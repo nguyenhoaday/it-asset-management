@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Loading...",
+    "done": "Done",
     "connectionError": "Could not connect to the server. Please try again later.",
     "unknownError": "An unknown error occurred.",
     "confirmDelete": "Are you sure you want to delete this asset?",
@@ -37,6 +38,8 @@
     "actions": "Actions"
   },
   "reports": {
+    "title": "Reports",
+    "description": "Export detailed reports about assets, maintenances, and other information.",
     "exportDropdown": "Export Reports",
     "assetsExcel": "Export Assets List (Excel)",
     "allocationsExcel": "Export Allocation History (Excel)",
@@ -44,7 +47,12 @@
     "exportExcel": "Export Excel",
     "exporting": "Exporting report...",
     "exportSuccess": "Report downloaded successfully!",
-    "exportFailed": "Failed to export report!"
+    "exportFailed": "Failed to export report!",
+    "maintenanceReport": "Maintenance Report & History",
+    "maintenanceReportHint": "Select a date range (From - To) to download the Maintenance Report in PDF format.",
+    "selectDateRange": "Select Date Range",
+    "chooseDatePlaceholder": "Choose date range...",
+    "exportPdf": "Export PDF Report"
   },
   "login": {
     "welcome": "Welcome back, please log in",
@@ -77,7 +85,9 @@
     "myAssets": "Devices in Use",
     "requestAsset": "Handover Confirmations",
     "inventory": "Inventory",
-    "scanQR": "Scan QR"
+    "scanQR": "Scan QR",
+    "reports": "Reports",
+    "systemConfig": "System Configuration"
   },
   "header": {
     "profile": "Profile",
@@ -111,6 +121,8 @@
     "purchaseDateLabel": "Purchase Date",
     "warrantyExpiryLabel": "Warranty Expiry",
     "invoiceLabel": "Purchase Invoice (URL/File)",
+    "usefulLifeLabel": "Useful Life (Months)",
+    "usefulLifePlaceholder": "e.g., 36 (leave blank for category default)",
     "save": "Save Asset",
     "cancel": "Cancel",
     "saveSuccess": "Asset saved successfully!",
@@ -131,6 +143,7 @@
     "purchaseDate": "Purchase Date",
     "purchaseCost": "Purchase Cost",
     "warrantyExpiry": "Warranty Expiry",
+    "usefulLife": "Depreciation Lifecycle",
     "qrCodeTitle": "Identification QR Code",
     "qrDesc": "Scan code for quick inventory check.",
     "back": "Back",
@@ -167,7 +180,9 @@
     "factorAge": "Age",
     "factorWarranty": "Warranty",
     "factorIncident": "Incident History",
-    "factorCondition": "Condition"
+    "factorCondition": "Condition",
+    "softwareExcludedTitle": "Software / License Asset",
+    "softwareExcludedDesc": "Software assets are excluded from physical depreciation and hardware incident scoring under Enterprise Gold Standard."
   },
   "actions": {
     "assign": "Assign Asset",
@@ -191,6 +206,8 @@
     "nameLabel": "Category Name",
     "codeLabel": "Category Code",
     "descriptionLabel": "Description",
+    "defaultUsefulLifeLabel": "Default Useful Life (Months)",
+    "defaultUsefulLifePlaceholder": "e.g., 36 (months)",
     "schemaLabel": "Specification Schema (JSON)",
     "schemaPlaceholder": "{\n  \"cpu\": \"string\",\n  \"ram\": \"string\",\n  \"storage\": \"string\"\n}",
     "schemaInvalid": "Invalid JSON Schema, please check the syntax.",
@@ -207,7 +224,10 @@
     "saveFailed": "Failed to save category.",
     "delete": "Delete Category",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "scoringPolicyLabel": "Health Scoring Policy",
+    "defaultPolicyOption": "-- System-wide Default --",
+    "scoringPolicyHint": "Assets under this category will apply weights defined by the selected scoring policy."
   },
   "allocation": {
     "assignTitle": "Assign Asset",
@@ -338,7 +358,23 @@
     "confirmed": "Confirmed",
     "rejected": "Rejected",
     "allStatuses": "All Statuses",
-    "noData": "No allocation requests found."
+    "noData": "No allocation requests found.",
+    "detailTitle": "Allocation / Request Details",
+    "requestCode": "Request ID",
+    "confirmStatus": "Confirmation Status",
+    "actionAssignDesc": "New Allocation (Assign)",
+    "actionTransferDesc": "Transfer",
+    "actionReturnDesc": "Return / Revoke",
+    "assetSection": "Asset & Device Information",
+    "transferSection": "User Transfer",
+    "fromUserLabel": "Handed Over By (From)",
+    "toUserLabel": "Recipient (To)",
+    "eventTimeLabel": "Event Time",
+    "lastUpdateLabel": "Last Updated",
+    "notesSection": "Notes & Reason",
+    "noNotes": "No notes left for this request.",
+    "confirmPrompt": "Please confirm or reject this allocation request",
+    "confirmBtn": "Confirm Receipt"
   },
   "requestAsset": {
     "title": "Handover Confirmations",
@@ -466,7 +502,6 @@
     "tempPasswordModalSubtitle": "Please copy the password below and send it to the employee \"{{username}}\". They should change their password immediately after logging in.",
     "copyPassword": "Copy Password",
     "copied": "Copied!",
-    "careScore": "Score",
     "status": "Status",
     "allStatuses": "All Statuses",
     "allDepartments": "All Departments"
@@ -492,8 +527,6 @@
     "warrantyAlertMessage": "{{count}} assets are expiring warranty within 30 days.",
     "viewList": "View List",
     "noData": "No data available",
-    "leaderboard": "Wall of Fame",
-    "points": "Score",
     "others": "Others"
   },
   "auditLogs": {
@@ -505,6 +538,7 @@
     "tableUser": "Performed By",
     "tableDate": "Timestamp",
     "tableDiff": "Change Details",
+    "tableDetails": "Details",
     "filterAll": "All",
     "noData": "No audit logs found",
     "actionCreate": "Create",
@@ -519,9 +553,34 @@
     "entityUser": "User",
     "entityLicense": "License",
     "entityCategory": "Category",
+    "entityAllocation": "Allocation",
+    "entityPolicy": "Policy",
     "field": "Field",
     "oldVal": "Old",
-    "newVal": "New"
+    "newVal": "New",
+    "detailTitle": "Audit Log Details",
+    "detailId": "ID",
+    "copySuccess": "Copied to clipboard!",
+    "actorInfo": "Actor & Session Information",
+    "actorLabel": "Performed By",
+    "timeLabel": "Timestamp",
+    "ipLabel": "IP Address",
+    "unknownIp": "Unknown",
+    "userIdLabel": "User ID",
+    "userAgentLabel": "Device / Browser (User-Agent)",
+    "noUserAgent": "No User-Agent information available",
+    "actionTargetSection": "Action & Target Entity",
+    "actionLabel": "Action",
+    "entityTypeLabel": "Entity Type",
+    "entityNameLabel": "Entity Name",
+    "entityIdLabel": "Entity ID",
+    "copyId": "Copy ID",
+    "copied": "Copied",
+    "diffSection": "Data Change Details (Payload Diff)",
+    "fieldsChanged": "{{count}} fields changed",
+    "noDiff": "No change data or this action does not record payload details.",
+    "closeWindow": "Close Window",
+    "viewDetails": "View Details"
   },
   "settings": {
     "title": "Settings & Account",
@@ -557,11 +616,49 @@
     "weightIncident": "Maintenance/Incident History Weight",
     "weightCondition": "Current Condition Weight",
     "totalWeight": "Total Weight",
-    "lifecycleMonths": "Standard Depreciation Lifecycle (Months)",
-    "lifecycleDesc": "Example: 60 months = 5 years. Used to calculate linear depreciation and age-based health decline.",
+    "lifecycleMonths": "System Default Depreciation Lifecycle (Months - Fallback)",
+    "lifecycleDesc": "Global fallback (e.g., 60 months = 5 years). Note: The system ALREADY supports a 3-tier dynamic priority mechanism: Priority 1 is the custom lifecycle of specific Assets/Products ➔ Priority 2 is the Category default lifecycle ➔ This global default is ONLY applied if both asset and category lifecycles are left blank.",
     "weightsMustSum100": "The total weight must equal 100%",
     "configSaved": "Configuration saved successfully",
     "configSaveFailed": "Failed to save configuration"
+  },
+  "systemConfig": {
+    "badge": "Enterprise Gold Standard",
+    "title": "System Configuration",
+    "subtitle": "Manage asset health scoring policies, valuation standards, and general operating parameters of the system",
+    "scoringPoliciesTab": "Scoring Policies",
+    "generalDefaultsTab": "General Defaults"
+  },
+  "scoringPolicies": {
+    "fetchFailed": "Failed to load scoring policies list",
+    "addBtn": "Add Policy",
+    "listTitle": "Scoring Policies List",
+    "listDesc": "Each asset category can apply a specific policy. Software assets will be automatically excluded from health scoring.",
+    "emptyTitle": "No policies yet",
+    "emptyDesc": "Create your first scoring policy to standardize valuation and asset health assessment",
+    "defaultBadge": "System-wide Default",
+    "noDescription": "No description",
+    "setDefaultTooltip": "Set as default policy",
+    "setDefaultBtn": "Set Default",
+    "editTitle": "Edit Policy",
+    "addTitle": "Add New Policy",
+    "nameLabel": "Policy Name",
+    "namePlaceholder": "e.g., Server & Network Standard",
+    "descLabel": "Detailed Description",
+    "descPlaceholder": "e.g., Prioritize incident penalties and warranty time for core equipment",
+    "weightsHeader": "Weight Distribution (Total 100%)",
+    "totalLabel": "Total",
+    "isDefaultLabel": "Set as default policy for the entire system",
+    "saveSuccess": "Scoring policy saved successfully",
+    "saveFailed": "Failed to save policy",
+    "setDefaultSuccess": "Default policy set successfully",
+    "setDefaultFailed": "Failed to set default policy",
+    "deleteSuccess": "Policy deleted successfully",
+    "deleteFailed": "Failed to delete policy (might be in use by categories)",
+    "deleteConfirmTitle": "Confirm policy deletion?",
+    "deleteConfirmDesc": "Are you sure you want to delete",
+    "deleteWarning": "This action cannot be undone.",
+    "weightsMustSum100": "Total weight of 4 factors must equal exactly 100%"
   },
   "pwa": {
     "title": "Install IT Asset Management App",

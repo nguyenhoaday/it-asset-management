@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-    LayoutDashboard, Package, Key, GitPullRequest, FolderTree, Users, ShieldAlert, Monitor, FileText, QrCode, ClipboardCheck, Wrench
+    LayoutDashboard, Package, Key, GitPullRequest, FolderTree, Users, ShieldAlert, Monitor, FileText, QrCode, ClipboardCheck, Sliders
 } from 'lucide-react';
 import Sidebar from './layout/Sidebar';
 import Header from './layout/Header';
@@ -83,11 +83,11 @@ export default function AppLayout() {
         { path: '/categories', label: t('menu.categories'), icon: FolderTree, roles: ['SUPER_ADMIN', 'IT_STAFF'] },
         { path: '/requests', label: t('menu.requests'), icon: FileText, roles: ['SUPER_ADMIN', 'IT_STAFF'] },
         { path: '/inventory', label: t('menu.inventory'), icon: ClipboardCheck, roles: ['SUPER_ADMIN', 'IT_STAFF'] },
-        { path: '/reports/maintenances', label: t('menu.maintenanceReport'), icon: Wrench, roles: ['SUPER_ADMIN', 'IT_STAFF'] },
 
         // System Administration
         { path: '/users', label: t('menu.users'), icon: Users, roles: ['SUPER_ADMIN'] },
         { path: '/audit-logs', label: t('menu.auditLogs'), icon: ShieldAlert, roles: ['SUPER_ADMIN'] },
+        { path: '/system-config', label: t('menu.systemConfig', 'Cấu hình Hệ thống'), icon: Sliders, roles: ['SUPER_ADMIN'] },
     ];
 
     const mobileMenuItems = [

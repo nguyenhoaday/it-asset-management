@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShieldAlert, ChevronLeft, ChevronRight, User, ArrowRight } from 'lucide-react';
+import { ShieldAlert, ChevronLeft, ChevronRight, User, Eye } from 'lucide-react';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
+import AuditLogDetailModal from '../components/AuditLogDetailModal';
 
 const AuditLogsPage = () => {
   const { t, i18n } = useTranslation();
@@ -10,6 +11,8 @@ const AuditLogsPage = () => {
 
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const [selectedAction, setSelectedAction] = useState('');
   const [selectedEntityType, setSelectedEntityType] = useState('');
@@ -58,6 +61,19 @@ const AuditLogsPage = () => {
     }
   };
 
+  const getEntityTypeLabel = (entityType) => {
+    if (!entityType) return '-';
+    switch (entityType) {
+      case 'ASSET': return t('auditLogs.entityAsset');
+      case 'USER': return t('auditLogs.entityUser');
+      case 'LICENSE': return t('auditLogs.entityLicense');
+      case 'CATEGORY': return t('auditLogs.entityCategory');
+      case 'ALLOCATION': return t('auditLogs.entityAllocation', 'Bàn giao');
+      case 'POLICY': return t('auditLogs.entityPolicy', 'Chính sách');
+      default: return entityType;
+    }
+  };
+
   const getActionBadge = (action) => {
     switch (action) {
       case 'CREATE':
@@ -76,36 +92,39 @@ const AuditLogsPage = () => {
     }
   };
 
-  const renderPayloadDiff = (payloadDiff) => {
+  const renderDiffSummary = (payloadDiff) => {
     if (!payloadDiff || Object.keys(payloadDiff).length === 0) {
       return <span className="text-gray-400 dark:text-gray-500">-</span>;
     }
 
+    const count = Object.keys(payloadDiff).length;
     return (
-      <div className="flex flex-col gap-1 text-xs">
-        {Object.entries(payloadDiff).map(([key, value]) => {
-          let oldVal = '-';
-          let newVal;
-          if (value && typeof value === 'object') {
-            oldVal = value.old !== null && value.old !== undefined ? String(value.old) : '-';
-            newVal = value.new !== null && value.new !== undefined ? String(value.new) : '-';
-          } else {
-            newVal = String(value);
-          }
-
-          return (
-            <div key={key} className="flex items-start gap-1 p-1 bg-gray-50 dark:bg-slate-800/50 rounded border border-gray-100 dark:border-gray-800">
-              <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[80px]">{key}:</span>
-              <div className="flex flex-wrap items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                <span className="line-through decoration-rose-400 opacity-70">{oldVal}</span>
-                <ArrowRight className="w-3 h-3 text-gray-400" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{newVal}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+        <span>{t('auditLogs.fieldsChanged', { count: count })}</span>
+      </span>
     );
+  };
+
+  const handleExport = async () => {
+    try {
+      showToast(t('exporting', 'Đang xuất báo cáo...'), 'info');
+      const res = await axiosClient.get('/audit-logs/export', {
+        params: { entityType: selectedEntityType || undefined, action: selectedAction || undefined, lang: i18n.language },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(res);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `AuditLogs_${new Date().toISOString().slice(0,10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(t('exportSuccess', 'Tải báo cáo thành công!'), 'success');
+    } catch (e) {
+      console.error("Export failed", e);
+      showToast(t('exportFailed', 'Xuất báo cáo thất bại!'), 'error');
+    }
   };
 
   return (
@@ -130,8 +149,13 @@ const AuditLogsPage = () => {
                 onChange={(e) => { setSelectedEntityType(e.target.value); setPage(0); }}
                 className="flex-1 sm:flex-none text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value="">{t('auditLogs.filterAll')} (Entity)</option>
+                <option value="">{t('auditLogs.filterAll')} ({t('auditLogs.tableEntity', 'Đối tượng')})</option>
                 <option value="ASSET">{t('auditLogs.entityAsset')}</option>
+                <option value="USER">{t('auditLogs.entityUser')}</option>
+                <option value="ALLOCATION">{t('auditLogs.entityAllocation', 'Bàn giao')}</option>
+                <option value="POLICY">{t('auditLogs.entityPolicy', 'Chính sách')}</option>
+                <option value="CATEGORY">{t('auditLogs.entityCategory', 'Danh mục')}</option>
+                <option value="LICENSE">{t('auditLogs.entityLicense', 'Bản quyền')}</option>
               </select>
               
               <select
@@ -139,7 +163,7 @@ const AuditLogsPage = () => {
                 onChange={(e) => { setSelectedAction(e.target.value); setPage(0); }}
                 className="flex-1 sm:flex-none text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value="">{t('auditLogs.filterAll')} (Action)</option>
+                <option value="">{t('auditLogs.filterAll')} ({t('auditLogs.tableAction', 'Hành động')})</option>
                 <option value="CREATE">{t('auditLogs.actionCreate')}</option>
                 <option value="UPDATE">{t('auditLogs.actionUpdate')}</option>
                 <option value="DELETE">{t('auditLogs.actionDelete')}</option>
@@ -149,6 +173,13 @@ const AuditLogsPage = () => {
                 <option value="CONFIRM">{t('auditLogs.actionConfirm')}</option>
                 <option value="REJECT">{t('auditLogs.actionReject')}</option>
               </select>
+
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+              >
+                {t('exportExcel', 'Xuất Excel')}
+              </button>
             </div>
           </div>
           
@@ -169,11 +200,16 @@ const AuditLogsPage = () => {
                       <th className="px-6 py-4">{t('auditLogs.tableName')}</th>
                       <th className="px-6 py-4">{t('auditLogs.tableDiff')}</th>
                       <th className="px-6 py-4">{t('auditLogs.tableDate')}</th>
+                      <th className="px-6 py-4 text-right">{t('auditLogs.tableDetails', 'Chi tiết')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {logs.map(log => (
-                      <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <tr 
+                        key={log.id} 
+                        onClick={() => { setSelectedLog(log); setIsDetailModalOpen(true); }}
+                        className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                      >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -181,7 +217,14 @@ const AuditLogsPage = () => {
                             </div>
                             <div className="flex flex-col">
                               <span className="font-medium text-gray-900 dark:text-white">{log.userFullName || log.username || '-'}</span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">@{log.username || 'unknown'}</span>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span>@{log.username || 'unknown'}</span>
+                                {log.ipAddress && (
+                                  <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-mono text-[10px]" title={log.userAgent}>
+                                    IP: {log.ipAddress}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -189,22 +232,31 @@ const AuditLogsPage = () => {
                           {getActionBadge(log.action)}
                         </td>
                         <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                          {log.entityType === 'ASSET' ? t('auditLogs.entityAsset') : log.entityType}
+                          {getEntityTypeLabel(log.entityType)}
                         </td>
                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                           {log.entityName || log.entityId}
                         </td>
                         <td className="px-6 py-4">
-                          {renderPayloadDiff(log.payloadDiff)}
+                          {renderDiffSummary(log.payloadDiff)}
                         </td>
                         <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
                           {formatDate(log.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedLog(log); setIsDetailModalOpen(true); }}
+                            className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors cursor-pointer"
+                            title={t('auditLogs.viewDetails', 'Xem chi tiết')}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))}
                     {logs.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                           {t('auditLogs.noData')}
                         </td>
                       </tr>
@@ -218,7 +270,7 @@ const AuditLogsPage = () => {
             {totalPages > 0 && (
               <div className="flex items-center justify-between shrink-0 pt-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Trang <span className="font-medium text-gray-900 dark:text-white">{page + 1}</span> / <span className="font-medium text-gray-900 dark:text-white">{totalPages}</span>
+                  {t('common.pageInfo', { page: page + 1, totalPages })}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -241,8 +293,18 @@ const AuditLogsPage = () => {
           </div>
         </div>
       </div>
+
+      <AuditLogDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        log={selectedLog}
+        getActionBadge={getActionBadge}
+        getEntityTypeLabel={getEntityTypeLabel}
+        formatDate={formatDate}
+      />
     </div>
   );
 };
 
 export default AuditLogsPage;
+

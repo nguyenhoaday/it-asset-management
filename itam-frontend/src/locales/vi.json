@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Đang tải...",
+    "done": "Xong",
     "connectionError": "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.",
     "unknownError": "Đã xảy ra lỗi không xác định.",
     "confirmDelete": "Bạn có chắc chắn muốn xóa tài sản này không?",
@@ -37,6 +38,8 @@
     "actions": "Thao tác"
   },
   "reports": {
+    "title": "Báo cáo",
+    "description": "Xuất các báo cáo chi tiết về tài sản, bảo trì và các thông tin khác.",
     "exportDropdown": "Xuất báo cáo",
     "assetsExcel": "Xuất danh sách tài sản (Excel)",
     "allocationsExcel": "Xuất lịch sử bàn giao (Excel)",
@@ -44,7 +47,12 @@
     "exportExcel": "Xuất Excel",
     "exporting": "Đang xuất báo cáo...",
     "exportSuccess": "Tải báo cáo thành công!",
-    "exportFailed": "Xuất báo cáo thất bại!"
+    "exportFailed": "Xuất báo cáo thất bại!",
+    "maintenanceReport": "Báo cáo & Lịch sử Bảo trì",
+    "maintenanceReportHint": "Chọn khoảng thời gian (Từ ngày - Đến ngày) để tải xuống file Báo cáo Bảo trì định dạng PDF.",
+    "selectDateRange": "Chọn khoảng thời gian",
+    "chooseDatePlaceholder": "Chọn từ ngày - đến ngày...",
+    "exportPdf": "Tải Báo Cáo PDF"
   },
   "login": {
     "welcome": "Chào mừng trở lại, vui lòng đăng nhập",
@@ -77,7 +85,9 @@
     "myAssets": "Thiết bị đang dùng",
     "requestAsset": "Xác nhận nhận máy",
     "inventory": "Kiểm kê",
-    "scanQR": "Quét QR"
+    "scanQR": "Quét QR",
+    "reports": "Báo cáo",
+    "systemConfig": "Cấu hình Hệ thống"
   },
   "header": {
     "profile": "Hồ sơ cá nhân",
@@ -111,6 +121,8 @@
     "purchaseDateLabel": "Ngày mua",
     "warrantyExpiryLabel": "Hạn bảo hành",
     "invoiceLabel": "Hóa đơn mua hàng (URL/File)",
+    "usefulLifeLabel": "Thời gian khấu hao (Tháng)",
+    "usefulLifePlaceholder": "Ví dụ: 36 (để trống nếu dùng theo danh mục)",
     "save": "Lưu tài sản",
     "cancel": "Hủy bỏ",
     "saveSuccess": "Lưu tài sản thành công!",
@@ -131,6 +143,7 @@
     "purchaseDate": "Ngày mua",
     "purchaseCost": "Chi phí mua",
     "warrantyExpiry": "Hạn bảo hành",
+    "usefulLife": "Vòng đời khấu hao",
     "qrCodeTitle": "Mã QR định danh",
     "qrDesc": "Quét mã để kiểm kê thiết bị nhanh chóng.",
     "back": "Quay lại",
@@ -167,7 +180,9 @@
     "factorAge": "Tuổi đời",
     "factorWarranty": "Bảo hành",
     "factorIncident": "Lịch sử sự cố",
-    "factorCondition": "Trạng thái"
+    "factorCondition": "Trạng thái",
+    "softwareExcludedTitle": "Tài sản Phần mềm / Giấy phép",
+    "softwareExcludedDesc": "Phần mềm không áp dụng tính điểm khấu hao vật lý hay sự cố phần cứng theo tiêu chuẩn Enterprise Gold Standard."
   },
   "actions": {
     "assign": "Bàn giao thiết bị",
@@ -191,6 +206,8 @@
     "nameLabel": "Tên danh mục",
     "codeLabel": "Mã danh mục",
     "descriptionLabel": "Mô tả",
+    "defaultUsefulLifeLabel": "Thời gian khấu hao mặc định (Tháng)",
+    "defaultUsefulLifePlaceholder": "Ví dụ: 36 (tháng)",
     "schemaLabel": "Thông số kỹ thuật (JSON Schema)",
     "schemaPlaceholder": "{\n  \"cpu\": \"string\",\n  \"ram\": \"string\",\n  \"storage\": \"string\"\n}",
     "schemaInvalid": "JSON Schema không hợp lệ, vui lòng kiểm tra lại cú pháp.",
@@ -207,7 +224,10 @@
     "saveFailed": "Có lỗi xảy ra khi lưu danh mục.",
     "delete": "Xóa danh mục",
     "active": "Đang hoạt động",
-    "inactive": "Không hoạt động"
+    "inactive": "Không hoạt động",
+    "scoringPolicyLabel": "Chính sách chấm điểm sức khỏe",
+    "defaultPolicyOption": "-- Mặc định toàn hệ thống --",
+    "scoringPolicyHint": "Tài sản thuộc danh mục này sẽ áp dụng trọng số chấm điểm theo chính sách được chọn."
   },
   "allocation": {
     "assignTitle": "Bàn giao thiết bị",
@@ -338,7 +358,23 @@
     "confirmed": "Đã xác nhận",
     "rejected": "Đã từ chối",
     "allStatuses": "Tất cả trạng thái",
-    "noData": "Không tìm thấy yêu cầu nào."
+    "noData": "Không tìm thấy yêu cầu nào.",
+    "detailTitle": "Chi tiết Phiếu Bàn giao / Yêu cầu",
+    "requestCode": "Mã phiếu",
+    "confirmStatus": "Trạng thái xác nhận",
+    "actionAssignDesc": "Cấp phát mới (Assign)",
+    "actionTransferDesc": "Điều chuyển (Transfer)",
+    "actionReturnDesc": "Thu hồi / Trả lại (Return)",
+    "assetSection": "Thông tin Tài sản & Thiết bị",
+    "transferSection": "Luân chuyển người dùng",
+    "fromUserLabel": "Người bàn giao (Từ)",
+    "toUserLabel": "Người tiếp nhận (Đến)",
+    "eventTimeLabel": "Thời gian thực hiện",
+    "lastUpdateLabel": "Thời gian cập nhật cuối",
+    "notesSection": "Ghi chú & Lý do thực hiện",
+    "noNotes": "Không có ghi chú nào được để lại.",
+    "confirmPrompt": "Vui lòng xác nhận hoặc từ chối phiếu bàn giao này",
+    "confirmBtn": "Xác nhận nhận thiết bị"
   },
   "requestAsset": {
     "title": "Xác nhận nhận máy",
@@ -466,7 +502,6 @@
     "tempPasswordModalSubtitle": "Vui lòng sao chép mật khẩu dưới đây và gửi cho nhân viên \"{{username}}\". Họ nên đổi mật khẩu ngay sau khi đăng nhập.",
     "copyPassword": "Sao chép mật khẩu",
     "copied": "Đã sao chép!",
-    "careScore": "Điểm",
     "status": "Trạng thái",
     "allStatuses": "Tất cả trạng thái",
     "allDepartments": "Tất cả phòng ban"
@@ -492,8 +527,6 @@
     "warrantyAlertMessage": "{{count}} thiết bị sắp hết hạn bảo hành trong 30 ngày tới.",
     "viewList": "Xem danh sách",
     "noData": "Chưa có dữ liệu",
-    "leaderboard": "Bảng Vinh Danh",
-    "points": "Điểm",
     "others": "Khác"
   },
   "auditLogs": {
@@ -505,6 +538,7 @@
     "tableUser": "Người thực hiện",
     "tableDate": "Thời gian",
     "tableDiff": "Chi tiết thay đổi",
+    "tableDetails": "Chi tiết",
     "filterAll": "Tất cả",
     "noData": "Không tìm thấy nhật ký hệ thống nào",
     "actionCreate": "Thêm mới",
@@ -519,9 +553,34 @@
     "entityUser": "Người dùng",
     "entityLicense": "Bản quyền",
     "entityCategory": "Danh mục",
+    "entityAllocation": "Bàn giao",
+    "entityPolicy": "Chính sách",
     "field": "Trường",
     "oldVal": "Cũ",
-    "newVal": "Mới"
+    "newVal": "Mới",
+    "detailTitle": "Chi tiết Nhật ký Kiểm toán (Audit Log)",
+    "detailId": "ID",
+    "copySuccess": "Đã sao chép vào clipboard!",
+    "actorInfo": "Thông tin Người thực hiện & Phiên kết nối",
+    "actorLabel": "Người thực hiện",
+    "timeLabel": "Thời gian ghi nhận",
+    "ipLabel": "Địa chỉ IP (IP Address)",
+    "unknownIp": "Không xác định",
+    "userIdLabel": "ID Người dùng (User ID)",
+    "userAgentLabel": "Thiết bị / Trình duyệt (User-Agent)",
+    "noUserAgent": "Không có thông tin User-Agent",
+    "actionTargetSection": "Thao tác & Đối tượng tác động",
+    "actionLabel": "Hành động (Action)",
+    "entityTypeLabel": "Loại đối tượng (Entity Type)",
+    "entityNameLabel": "Tên đối tượng",
+    "entityIdLabel": "Mã định danh đối tượng (Entity ID)",
+    "copyId": "Sao chép ID",
+    "copied": "Đã chép",
+    "diffSection": "Chi tiết thay đổi dữ liệu (Payload Diff)",
+    "fieldsChanged": "{{count}} trường thay đổi",
+    "noDiff": "Không có dữ liệu thay đổi hoặc hành động này không ghi nhận chi tiết payload.",
+    "closeWindow": "Đóng cửa sổ",
+    "viewDetails": "Xem chi tiết"
   },
   "settings": {
     "title": "Cài đặt & Tài khoản",
@@ -557,11 +616,49 @@
     "weightIncident": "Trọng số Lịch sử Bảo trì/Sự cố",
     "weightCondition": "Trọng số Tình trạng Hiện tại",
     "totalWeight": "Tổng Trọng Số",
-    "lifecycleMonths": "Vòng đời khấu hao tiêu chuẩn (Tháng)",
-    "lifecycleDesc": "Ví dụ: 60 tháng = 5 năm. Dùng để tính giá trị khấu hao tuyến tính và suy giảm sức khỏe theo tuổi đời.",
+    "lifecycleMonths": "Vòng đời khấu hao chung hệ thống (Tháng - Fallback)",
+    "lifecycleDesc": "Mặc định chung (ví dụ: 60 tháng = 5 năm). Lưu ý: Hệ thống ĐÃ HỖ TRỢ cấu hình động 3 cấp độ: Ưu tiên 1 là vòng đời riêng của từng Sản phẩm/Tài sản (khi tạo/sửa tài sản) ➔ Ưu tiên 2 là vòng đời theo Danh mục (khi tạo/sửa danh mục) ➔ Nếu cả 2 đều để trống mới áp dụng con số Mặc định chung này.",
     "weightsMustSum100": "Tổng các trọng số phải bằng 100%",
     "configSaved": "Lưu cấu hình thành công",
     "configSaveFailed": "Lưu cấu hình thất bại"
+  },
+  "systemConfig": {
+    "badge": "Enterprise Gold Standard",
+    "title": "Cấu hình Hệ thống",
+    "subtitle": "Quản lý chính sách chấm điểm sức khỏe tài sản, tiêu chuẩn định giá và các thông số vận hành chung của hệ thống",
+    "scoringPoliciesTab": "Chính sách chấm điểm",
+    "generalDefaultsTab": "Cấu hình chung"
+  },
+  "scoringPolicies": {
+    "fetchFailed": "Không thể tải danh sách chính sách chấm điểm",
+    "addBtn": "Thêm Chính sách",
+    "listTitle": "Danh sách Chính sách Chấm điểm",
+    "listDesc": "Mỗi danh mục tài sản có thể áp dụng một chính sách riêng. Thiết bị phần mềm sẽ tự động loại trừ khỏi việc chấm điểm.",
+    "emptyTitle": "Chưa có chính sách nào",
+    "emptyDesc": "Tạo chính sách chấm điểm đầu tiên để chuẩn hóa việc định giá và đánh giá sức khỏe tài sản",
+    "defaultBadge": "Mặc định toàn hệ thống",
+    "noDescription": "Không có mô tả",
+    "setDefaultTooltip": "Đặt làm chính sách mặc định",
+    "setDefaultBtn": "Đặt Mặc định",
+    "editTitle": "Chỉnh sửa Chính sách",
+    "addTitle": "Thêm Chính sách mới",
+    "nameLabel": "Tên chính sách",
+    "namePlaceholder": "VD: Tiêu chuẩn Máy chủ & Network",
+    "descLabel": "Mô tả chi tiết",
+    "descPlaceholder": "VD: Ưu tiên độ trễ sự cố và thời gian bảo hành cho các thiết bị trung tâm",
+    "weightsHeader": "Phân bổ trọng số (Tổng 100%)",
+    "totalLabel": "Tổng",
+    "isDefaultLabel": "Đặt làm chính sách mặc định cho toàn hệ thống",
+    "saveSuccess": "Đã lưu chính sách chấm điểm thành công",
+    "saveFailed": "Lưu chính sách thất bại",
+    "setDefaultSuccess": "Đã thiết lập chính sách mặc định thành công",
+    "setDefaultFailed": "Không thể thiết lập mặc định",
+    "deleteSuccess": "Đã xóa chính sách thành công",
+    "deleteFailed": "Không thể xóa chính sách (có thể đang được sử dụng bởi danh mục)",
+    "deleteConfirmTitle": "Xác nhận xóa chính sách?",
+    "deleteConfirmDesc": "Bạn có chắc chắn muốn xóa",
+    "deleteWarning": "Hành động này không thể hoàn tác.",
+    "weightsMustSum100": "Tổng trọng số 4 tiêu chí phải đúng bằng 100%"
   },
   "pwa": {
     "title": "Cài đặt ứng dụng Quản lý tài sản (ITAM)",
