@@ -32,6 +32,7 @@ const AssetFormPage = () => {
     currency: 'VND',
     purchaseDate: '',
     warrantyExpiry: '',
+    usefulLifeMonths: '',
     purchaseInvoiceUrl: '',
     specification: {}
   });
@@ -100,6 +101,7 @@ const AssetFormPage = () => {
             currency: asset.currency || 'VND',
             purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toISOString().split('T')[0] : '',
             warrantyExpiry: asset.warrantyExpiry ? new Date(asset.warrantyExpiry).toISOString().split('T')[0] : '',
+            usefulLifeMonths: asset.usefulLifeMonths != null ? asset.usefulLifeMonths : '',
             purchaseInvoiceUrl: asset.purchaseInvoiceUrl || '',
             specification: asset.specification || {}
           });
@@ -156,6 +158,7 @@ const AssetFormPage = () => {
       const payload = {
         ...formData,
         purchaseCost: formData.purchaseCost ? Number(formData.purchaseCost) : null,
+        usefulLifeMonths: formData.usefulLifeMonths !== '' ? Number(formData.usefulLifeMonths) : null,
       };
 
       if (isEdit) {
@@ -398,6 +401,20 @@ const AssetFormPage = () => {
                     value={formData.warrantyExpiry}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('assets.usefulLifeLabel')}
+                  </label>
+                  <input
+                    type="number"
+                    name="usefulLifeMonths"
+                    value={formData.usefulLifeMonths}
+                    onChange={handleInputChange}
+                    placeholder={t('assets.usefulLifePlaceholder')}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
                   />
                 </div>
               </div>

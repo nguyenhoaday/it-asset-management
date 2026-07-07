@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { User, Lock, Settings, ShieldCheck, Mail, Building, ShieldAlert, KeyRound, Check, Sliders } from 'lucide-react';
+import { User, Lock, Settings, ShieldCheck, Mail, Building, ShieldAlert, KeyRound, Check } from 'lucide-react';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
-import ConfigTab from '../components/ConfigTab';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
@@ -12,7 +11,7 @@ const SettingsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   const tabParam = searchParams.get('tab');
-  const activeTab = ['profile', 'password', 'config'].includes(tabParam) ? tabParam : 'profile';
+  const activeTab = ['profile', 'password'].includes(tabParam) ? tabParam : 'profile';
   
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -125,19 +124,6 @@ const SettingsPage = () => {
               <Lock className="w-4 h-4" />
               {t('settings.passwordTab')}
             </button>
-            {userInfo?.role === 'SUPER_ADMIN' && (
-              <button
-                onClick={() => handleTabChange('config')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  activeTab === 'config'
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <Sliders className="w-4 h-4" />
-                {t('settings.configTab', 'Cấu hình Hệ thống')}
-              </button>
-            )}
           </div>
 
           {/* Content */}
@@ -282,11 +268,6 @@ const SettingsPage = () => {
                   </button>
                 </div>
               </form>
-            )}
-
-            {/* Config tab */}
-            {activeTab === 'config' && userInfo?.role === 'SUPER_ADMIN' && (
-              <ConfigTab />
             )}
 
           </div>

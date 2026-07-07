@@ -4,17 +4,19 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, Edit, Package, QrCode, ClipboardList, Info,
   Settings, UserCheck, ArrowRightLeft, PenTool, CheckCircle2,
-  User, FileText, ExternalLink
+  User, FileText, ExternalLink, FileDown
 } from 'lucide-react';
 import axiosClient, { getHostUrl } from '../services/axiosClient';
 import AllocationModal from '../components/AllocationModal';
 import MaintenanceModal from '../components/MaintenanceModal';
 import HealthScoreWidget from '../components/HealthScoreWidget';
+import { useToast } from '../context/ToastContext';
 
 const AssetDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
   const currentLocale = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-US';
 
   const [asset, setAsset] = useState(null);
@@ -89,7 +91,7 @@ const AssetDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, canManage]);
 
   useEffect(() => {
     fetchAssetData();
@@ -115,6 +117,27 @@ const AssetDetailPage = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleExportMaintenances = async () => {
+    try {
+      showToast(t('reports.exporting') || 'Đang xuất báo cáo...', 'info');
+      const response = await axiosClient.get(`/reports/maintenances?lang=${i18n.language || 'vi'}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `LichSuBaoTri_${new Date().toISOString().slice(0,10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(t('reports.exportSuccess') || 'Tải báo cáo thành công!', 'success');
+    } catch (error) {
+      console.error('Error exporting maintenances:', error);
+      showToast(t('reports.exportFailed') || 'Xuất báo cáo thất bại!', 'error');
+    }
   };
 
   const handlePrintQr = () => {
@@ -389,6 +412,12 @@ const AssetDetailPage = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('assetDetail.warrantyExpiry')}</p>
                     <p className="text-gray-900 dark:text-white">{asset.warrantyExpiry ? new Date(asset.warrantyExpiry).toLocaleDateString(currentLocale) : '-'}</p>
                   </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('assetDetail.usefulLife')}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">
+                      {asset.usefulLifeMonths ? `${asset.usefulLifeMonths} ${currentLocale.startsWith('vi') ? 'tháng' : 'months'}` : (currentLocale.startsWith('vi') ? 'Theo danh mục / Hệ thống' : 'Category / System default')}
+                    </p>
+                  </div>
                   {asset.purchaseInvoiceUrl && (
                     <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('assetDetail.invoiceFile')}</p>
@@ -566,8 +595,18 @@ const AssetDetailPage = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
+                  <div className="space-y-4">
+                    <div className="flex justify-end px-4 pt-4">
+                      <button
+                        onClick={handleExportMaintenances}
+                        className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        <span>{t('reports.maintenancesPdf') || 'Xuất lịch sử bảo trì (PDF)'}</span>
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[600px]">
                       <thead className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium border-b border-gray-100 dark:border-gray-800">
                         <tr>
                           <th className="px-4 py-3">{t('maintenance.startDate')}</th>
@@ -626,6 +665,7 @@ const AssetDetailPage = () => {
                         )}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 )}
               </div>

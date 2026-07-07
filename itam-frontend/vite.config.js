@@ -76,13 +76,14 @@ export default defineConfig(({ mode }) => {
                 return 'vendor-icons';
               }
               if (
-                id.includes('node_modules/react') ||
-                id.includes('node_modules/scheduler') ||
-                id.includes('use-sync-external-store')
+                id.includes('react') ||
+                id.includes('scheduler') ||
+                id.includes('use-sync-external-store') ||
+                id.includes('axios') ||
+                id.includes('i18next')
               ) {
-                return 'vendor-react';
+                return 'vendor-core';
               }
-              return 'vendor';
             }
           }
         }

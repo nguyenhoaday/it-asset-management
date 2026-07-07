@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Plus, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Package, ShieldAlert, X } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Package, ShieldAlert, X, FileSpreadsheet } from 'lucide-react';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
 
@@ -138,6 +138,27 @@ const AssetListPage = () => {
     setPage(0);
   };
 
+  const handleExportAssets = async () => {
+    try {
+      showToast(t('reports.exporting') || 'Đang xuất báo cáo...', 'info');
+      const response = await axiosClient.get(`/reports/assets?lang=${i18n.language || 'vi'}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `DanhSachTaiSan_${new Date().toISOString().slice(0,10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(t('reports.exportSuccess') || 'Tải báo cáo thành công!', 'success');
+    } catch (error) {
+      console.error('Error exporting assets:', error);
+      showToast(t('reports.exportFailed') || 'Xuất báo cáo thất bại!', 'error');
+    }
+  };
+
   const confirmDelete = async () => {
     if (!assetToDelete) return;
     try {
@@ -170,15 +191,25 @@ const AssetListPage = () => {
                 {t('assets.title')}
               </h1>
             </div>
-            {canAddEdit && (
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
               <button
-                onClick={() => navigate('/assets/new')}
-                className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors w-full sm:w-auto justify-center shadow-sm cursor-pointer"
+                onClick={handleExportAssets}
+                className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors w-full sm:w-auto justify-center shadow-sm cursor-pointer"
+                title={t('reports.exportExcel') || 'Xuất Excel'}
               >
-                <Plus className="w-4 h-4" />
-                {t('assets.addAsset')}
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>{t('reports.exportExcel') || 'Xuất Excel'}</span>
               </button>
-            )}
+              {canAddEdit && (
+                <button
+                  onClick={() => navigate('/assets/new')}
+                  className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors w-full sm:w-auto justify-center shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t('assets.addAsset')}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Banner cảnh báo khi lọc warranty */}

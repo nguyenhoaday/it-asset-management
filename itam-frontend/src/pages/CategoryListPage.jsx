@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FolderTree, Plus, Edit, Trash2, X, AlertTriangle } from 'lucide-react';
+import { FolderTree, Plus, Edit, Trash2, X, AlertTriangle, Award } from 'lucide-react';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
 
@@ -14,10 +14,11 @@ const CategoryListPage = () => {
   const canManage = role === 'SUPER_ADMIN' || role === 'IT_STAFF';
 
   const [categories, setCategories] = useState([]);
+  const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({ name: '', code: '', description: '', specificationSchema: '' });
+  const [formData, setFormData] = useState({ name: '', code: '', description: '', defaultUsefulLifeMonths: '', specificationSchema: '', scoringPolicyId: '' });
   const [schemaError, setSchemaError] = useState('');
   const [saving, setSaving] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -27,8 +28,12 @@ const CategoryListPage = () => {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axiosClient.get('/categories');
-      setCategories(Array.isArray(response) ? response : []);
+      const [catsRes, policiesRes] = await Promise.all([
+        axiosClient.get('/categories'),
+        axiosClient.get('/scoring-policies').catch(() => [])
+      ]);
+      setCategories(Array.isArray(catsRes) ? catsRes : []);
+      setPolicies(Array.isArray(policiesRes) ? policiesRes : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       showToast(t('categories.deleteFailed'), 'error');
@@ -41,7 +46,7 @@ const CategoryListPage = () => {
 
   const openAddModal = () => {
     setEditingCategory(null);
-    setFormData({ name: '', code: '', description: '', specificationSchema: '' });
+    setFormData({ name: '', code: '', description: '', defaultUsefulLifeMonths: '', specificationSchema: '', scoringPolicyId: '' });
     setSchemaError('');
     setIsModalOpen(true);
   };
@@ -52,7 +57,9 @@ const CategoryListPage = () => {
       name: cat.name || '',
       code: cat.code || '',
       description: cat.description || '',
-      specificationSchema: cat.specificationSchema ? JSON.stringify(cat.specificationSchema, null, 2) : ''
+      defaultUsefulLifeMonths: cat.defaultUsefulLifeMonths != null ? cat.defaultUsefulLifeMonths : '',
+      specificationSchema: cat.specificationSchema ? JSON.stringify(cat.specificationSchema, null, 2) : '',
+      scoringPolicyId: cat.scoringPolicyId || ''
     });
     setSchemaError('');
     setIsModalOpen(true);
@@ -73,7 +80,14 @@ const CategoryListPage = () => {
     }
     setSaving(true);
     try {
-      const payload = { name: formData.name, code: formData.code, description: formData.description, specificationSchema: parsedSchema };
+      const payload = {
+        name: formData.name,
+        code: formData.code,
+        description: formData.description,
+        defaultUsefulLifeMonths: formData.defaultUsefulLifeMonths !== '' ? parseInt(formData.defaultUsefulLifeMonths, 10) : null,
+        specificationSchema: parsedSchema,
+        scoringPolicyId: formData.scoringPolicyId !== '' ? formData.scoringPolicyId : null
+      };
       if (editingCategory) { await axiosClient.put(`/categories/${editingCategory.id}`, payload); }
       else { await axiosClient.post('/categories', payload); }
       showToast(t('categories.saveSuccess'), 'success');
@@ -145,9 +159,22 @@ const CategoryListPage = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 pr-2">
                       <h3 className="font-semibold text-gray-900 dark:text-white truncate mb-1" title={cat.name}>{cat.name}</h3>
-                      <span className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-mono text-xs rounded border border-indigo-100 dark:border-indigo-900/50">
-                        {cat.code}
-                      </span>
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-mono text-xs rounded border border-indigo-100 dark:border-indigo-900/50">
+                          {cat.code}
+                        </span>
+                        {cat.defaultUsefulLifeMonths ? (
+                          <span className="inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-medium rounded border border-amber-100 dark:border-amber-900/50">
+                            {cat.defaultUsefulLifeMonths} {t('settings.lifecycleDesc').includes('year') ? 'months' : 'tháng'}
+                          </span>
+                        ) : null}
+                        {cat.scoringPolicyName ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 text-[10px] font-bold rounded border border-purple-100 dark:border-purple-900/50" title="Chính sách chấm điểm áp dụng">
+                            <Award className="w-3 h-3" />
+                            {cat.scoringPolicyName}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <span className={`flex-shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${cat.isActive !== false ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-900/50' : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-800 dark:text-gray-400 dark:border-gray-700'}`}>
                       {cat.isActive !== false ? t('categories.active') : t('categories.inactive')}
@@ -201,6 +228,32 @@ const CategoryListPage = () => {
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('categories.descriptionLabel')}</label>
                 <textarea name="description" rows="2" value={formData.description} onChange={handleInputChange} className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none transition-colors" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('categories.defaultUsefulLifeLabel')}</label>
+                <input type="number" name="defaultUsefulLifeMonths" value={formData.defaultUsefulLifeMonths} onChange={handleInputChange} placeholder={t('categories.defaultUsefulLifePlaceholder')} className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-indigo-500" />
+                  {t('categories.scoringPolicyLabel', 'Chính sách chấm điểm sức khỏe')}
+                </label>
+                <select
+                  name="scoringPolicyId"
+                  value={formData.scoringPolicyId}
+                  onChange={handleInputChange}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors cursor-pointer"
+                >
+                  <option value="">{t('categories.defaultPolicyOption', '-- Mặc định toàn hệ thống --')}</option>
+                  {policies.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.isDefault ? '(Mặc định)' : ''} ({p.weightAge}/${p.weightWarranty}/${p.weightIncident}/${p.weightCondition})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('categories.scoringPolicyHint', 'Tài sản thuộc danh mục này sẽ áp dụng trọng số chấm điểm theo chính sách được chọn.')}
+                </p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('categories.schemaLabel')}</label>
