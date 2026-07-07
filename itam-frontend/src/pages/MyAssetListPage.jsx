@@ -46,12 +46,9 @@ const MyAssetListPage = () => {
   }, [showToast, t]);
 
   useEffect(() => {
-    if (activeTab === 'hardware') {
-      fetchMyAssets();
-    } else {
-      fetchMyLicenses();
-    }
-  }, [activeTab, fetchMyAssets, fetchMyLicenses]);
+    fetchMyAssets();
+    fetchMyLicenses();
+  }, [fetchMyAssets, fetchMyLicenses]);
 
   const handleCopyKey = (key, id) => {
     if (!key) return;

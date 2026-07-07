@@ -128,7 +128,7 @@ const LicenseListPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, statusFilter, page, size]);
+  }, [debouncedSearch, statusFilter, page, size, showToast, t]);
 
   useEffect(() => {
     fetchLicenses();

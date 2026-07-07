@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Clock, CheckCircle, XCircle, Filter, ChevronLeft, ChevronRight, ArrowRightLeft, UserPlus, X, AlertCircle, ArchiveRestore } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, Filter, ChevronLeft, ChevronRight, ArrowRightLeft, UserPlus, X, AlertCircle, ArchiveRestore, FileSpreadsheet, Eye } from 'lucide-react';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
+import RequestDetailModal from '../components/RequestDetailModal';
 
 const RequestListPage = () => {
   const { t, i18n } = useTranslation();
@@ -22,6 +23,8 @@ const RequestListPage = () => {
   const [assetsMap, setAssetsMap] = useState({});
 
   const [loading, setLoading] = useState(true);
+  const [selectedAllocation, setSelectedAllocation] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Modal confirm/reject bàn giao
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -90,6 +93,27 @@ const RequestListPage = () => {
   const handleStatusChange = (e) => {
     setStatusFilter(e.target.value);
     setPage(0);
+  };
+
+  const handleExportAllocations = async () => {
+    try {
+      showToast(t('reports.exporting') || 'Đang xuất báo cáo...', 'info');
+      const response = await axiosClient.get(`/reports/allocations?lang=${i18n.language || 'vi'}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `LichSuBanGiao_${new Date().toISOString().slice(0,10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(t('reports.exportSuccess') || 'Tải báo cáo thành công!', 'success');
+    } catch (error) {
+      console.error('Error exporting allocations:', error);
+      showToast(t('reports.exportFailed') || 'Xuất báo cáo thất bại!', 'error');
+    }
   };
 
   const handlePrevPage = () => {
@@ -161,7 +185,15 @@ const RequestListPage = () => {
               {t('requests.subtitle')}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={handleExportAllocations}
+              className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+              title={t('reports.exportExcel') || 'Xuất Excel'}
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('reports.exportExcel') || 'Xuất Excel'}</span>
+            </button>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Filter className="h-4 w-4 text-gray-400" />
@@ -197,14 +229,13 @@ const RequestListPage = () => {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-gray-50/50 dark:bg-slate-800/50 text-gray-500 dark:text-gray-400 font-medium border-b border-gray-200 dark:border-gray-800">
                     <tr>
-                      <th className="px-6 py-4">{t('requests.assetName')}</th>
-                      <th className="px-6 py-4">{t('requests.assetCode')}</th>
+                      <th className="px-6 py-4">{t('requests.assetName', 'Tên & Mã tài sản')}</th>
                       <th className="px-6 py-4">{t('requests.actionType')}</th>
                       <th className="px-6 py-4">{t('requests.fromUser')}</th>
                       <th className="px-6 py-4">{t('requests.toUser')}</th>
                       <th className="px-6 py-4">{t('requests.eventTime')}</th>
                       <th className="px-6 py-4">{t('requests.status')}</th>
-                      <th className="px-6 py-4">{t('requests.notes')}</th>
+                      <th className="px-6 py-4 hidden lg:table-cell">{t('requests.notes')}</th>
                       <th className="px-6 py-4 text-right">{t('common.actions') || t('myAssets.actions')}</th>
                     </tr>
                   </thead>
@@ -226,12 +257,14 @@ const RequestListPage = () => {
                       const canAction = isPending && currentUser && alloc.toUserId === currentUser.id;
 
                       return (
-                        <tr key={alloc.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                          <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                            {assetInfo.name}
-                          </td>
-                          <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">
-                            {assetInfo.code}
+                        <tr 
+                          key={alloc.id} 
+                          onClick={() => { setSelectedAllocation(alloc); setIsDetailModalOpen(true); }}
+                          className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="font-semibold text-gray-900 dark:text-white">{assetInfo.name}</div>
+                            <div className="font-mono text-xs text-gray-500 dark:text-gray-400 mt-0.5">{assetInfo.code || alloc.assetCode || '-'}</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
@@ -270,28 +303,37 @@ const RequestListPage = () => {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate" title={alloc.notes}>
+                          <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate hidden lg:table-cell" title={alloc.notes}>
                             {alloc.notes || '-'}
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {canAction ? (
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => { setSelectedAlloc(alloc); setIsConfirmModalOpen(true); }}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/50 text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
-                                >
-                                  <CheckCircle className="w-3 h-3" />
-                                  {t('myAssets.confirm')}
-                                </button>
-                                <button
-                                  onClick={() => { setSelectedAlloc(alloc); setIsRejectModalOpen(true); }}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:border-red-900/50 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
-                                >
-                                  <XCircle className="w-3 h-3" />
-                                  {t('myAssets.reject')}
-                                </button>
-                              </div>
-                            ) : '-'}
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedAllocation(alloc); setIsDetailModalOpen(true); }}
+                                className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors cursor-pointer"
+                                title={t('auditLogs.viewDetails', 'Xem chi tiết')}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              {canAction && (
+                                <>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setSelectedAlloc(alloc); setIsConfirmModalOpen(true); }}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/50 text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+                                  >
+                                    <CheckCircle className="w-3 h-3" />
+                                    {t('myAssets.confirm')}
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setSelectedAlloc(alloc); setIsRejectModalOpen(true); }}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:border-red-900/50 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+                                  >
+                                    <XCircle className="w-3 h-3" />
+                                    {t('myAssets.reject')}
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -410,6 +452,24 @@ const RequestListPage = () => {
         </div>
       )}
 
+      <RequestDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        allocation={selectedAllocation}
+        assetInfo={selectedAllocation ? (assetsMap[selectedAllocation.assetId] || { name: '-', code: '-' }) : {}}
+        fromUserName={selectedAllocation?.fromUserId ? (usersMap[selectedAllocation.fromUserId] || selectedAllocation.fromUserId) : '-'}
+        toUserName={selectedAllocation?.toUserId ? (usersMap[selectedAllocation.toUserId] || selectedAllocation.toUserId) : '-'}
+        onConfirm={(id) => {
+          const alloc = allocations.find(a => a.id === id);
+          if (alloc) { setSelectedAlloc(alloc); setIsConfirmModalOpen(true); }
+        }}
+        onReject={(id) => {
+          const alloc = allocations.find(a => a.id === id);
+          if (alloc) { setSelectedAlloc(alloc); setIsRejectModalOpen(true); }
+        }}
+        canAction={selectedAllocation && selectedAllocation.confirmationStatus === 'PENDING' && currentUser && selectedAllocation.toUserId === currentUser.id}
+        formatDate={formatDate}
+      />
     </div>
   );
 };

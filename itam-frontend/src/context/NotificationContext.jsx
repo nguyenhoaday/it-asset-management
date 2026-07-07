@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axiosClient from '../services/axiosClient';
 import useAuth from './useAuth';
@@ -11,7 +12,7 @@ export const useNotification = () => useContext(NotificationContext);
 
 const getWsUrl = (token) => {
     if (!token) return null;
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    const apiBase = window.__ENV__?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
     const wsBase = apiBase.replace(/^http/, 'ws');
     return `${wsBase}/api/v1/ws/notifications?token=${token}`;
 };

@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
-import LeaderboardWidget from '../components/LeaderboardWidget';
 import { useMemo } from 'react';
 
 const PIE_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -340,7 +339,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Biểu đồ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* biểu đồ tròn: Thống kê theo loại tài sản */}
           <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-6 flex flex-col h-[400px]">
@@ -456,9 +455,6 @@ const DashboardPage = () => {
               )}
             </div>
           </div>
-
-          {/* Leaderboard Widget */}
-          <LeaderboardWidget />
 
         </div>
 
