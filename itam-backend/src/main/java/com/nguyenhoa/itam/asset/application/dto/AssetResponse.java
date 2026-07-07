@@ -19,6 +19,7 @@ public class AssetResponse {
     private BigDecimal purchaseCost;
     private String purchaseInvoiceUrl;
     private LocalDate warrantyExpiry;
+    private Integer usefulLifeMonths;
     private AssetStatus status;
     private Map<String, Object> specification;
     private String qrCodeUrl;
@@ -28,7 +29,7 @@ public class AssetResponse {
     private String currency;
     private String assignedTo;
 
-    public AssetResponse(UUID id, String assetCode, String name, UUID categoryId, String categoryName, String serialNumber, LocalDate purchaseDate, BigDecimal purchaseCost, String purchaseInvoiceUrl, LocalDate warrantyExpiry, AssetStatus status, Map<String, Object> specification, String qrCodeUrl, UUID createdBy, Instant createdAt, Instant updatedAt, String currency, String assignedTo) {
+    public AssetResponse(UUID id, String assetCode, String name, UUID categoryId, String categoryName, String serialNumber, LocalDate purchaseDate, BigDecimal purchaseCost, String purchaseInvoiceUrl, LocalDate warrantyExpiry, Integer usefulLifeMonths, AssetStatus status, Map<String, Object> specification, String qrCodeUrl, UUID createdBy, Instant createdAt, Instant updatedAt, String currency, String assignedTo) {
         this.id = id;
         this.assetCode = assetCode;
         this.name = name;
@@ -39,6 +40,7 @@ public class AssetResponse {
         this.purchaseCost = purchaseCost;
         this.purchaseInvoiceUrl = purchaseInvoiceUrl;
         this.warrantyExpiry = warrantyExpiry;
+        this.usefulLifeMonths = usefulLifeMonths;
         this.status = status;
         this.specification = specification;
         this.qrCodeUrl = qrCodeUrl;
@@ -128,6 +130,14 @@ public class AssetResponse {
 
     public void setWarrantyExpiry(LocalDate warrantyExpiry) {
         this.warrantyExpiry = warrantyExpiry;
+    }
+
+    public Integer getUsefulLifeMonths() {
+        return usefulLifeMonths;
+    }
+
+    public void setUsefulLifeMonths(Integer usefulLifeMonths) {
+        this.usefulLifeMonths = usefulLifeMonths;
     }
 
     public AssetStatus getStatus() {

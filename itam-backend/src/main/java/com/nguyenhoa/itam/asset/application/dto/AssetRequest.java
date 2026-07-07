@@ -29,6 +29,7 @@ public class AssetRequest {
 
     private String purchaseInvoiceUrl;
     private LocalDate warrantyExpiry;
+    private Integer usefulLifeMonths;
     private AssetStatus status;
     private Map<String, Object> specification;
 
@@ -86,6 +87,14 @@ public class AssetRequest {
 
     public void setWarrantyExpiry(LocalDate warrantyExpiry) {
         this.warrantyExpiry = warrantyExpiry;
+    }
+
+    public Integer getUsefulLifeMonths() {
+        return usefulLifeMonths;
+    }
+
+    public void setUsefulLifeMonths(Integer usefulLifeMonths) {
+        this.usefulLifeMonths = usefulLifeMonths;
     }
 
     public AssetStatus getStatus() {

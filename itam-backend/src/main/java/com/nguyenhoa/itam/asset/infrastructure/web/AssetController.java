@@ -12,6 +12,7 @@ import com.nguyenhoa.itam.iam.api.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,7 @@ public class AssetController {
                                                                  @RequestParam(required = false) Boolean warrantyExpiring,
                                                                  @RequestParam(defaultValue = "0") int page,
                                                                  @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         PageResponse<AssetResponse> pageResponse = assetService.getAssets(categoryId, status, search, warrantyExpiring, pageable);
         return ResponseEntity.ok(ApiResponse.success(pageResponse));
     }

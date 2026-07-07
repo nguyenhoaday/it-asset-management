@@ -119,6 +119,7 @@ public class AssetService {
         asset.setCurrency(request.getCurrency() != null ? request.getCurrency().trim().toUpperCase() : "VND");
         asset.setPurchaseInvoiceUrl(request.getPurchaseInvoiceUrl());
         asset.setWarrantyExpiry(request.getWarrantyExpiry());
+        asset.setUsefulLifeMonths(request.getUsefulLifeMonths());
         asset.setStatus(AssetStatus.AVAILABLE);
         asset.setSpecification(request.getSpecification());
         asset.setCreatedBy(createdById);
@@ -162,6 +163,7 @@ public class AssetService {
         }
         asset.setPurchaseInvoiceUrl(request.getPurchaseInvoiceUrl());
         asset.setWarrantyExpiry(request.getWarrantyExpiry());
+        asset.setUsefulLifeMonths(request.getUsefulLifeMonths());
         asset.setSpecification(request.getSpecification());
 
         if (request.getStatus() != null) {
@@ -260,6 +262,7 @@ public class AssetService {
                 asset.getPurchaseCost(),
                 asset.getPurchaseInvoiceUrl(),
                 asset.getWarrantyExpiry(),
+                asset.getUsefulLifeMonths(),
                 asset.getStatus(),
                 asset.getSpecification(),
                 "/api/v1/assets/" + asset.getId() + "/qr",

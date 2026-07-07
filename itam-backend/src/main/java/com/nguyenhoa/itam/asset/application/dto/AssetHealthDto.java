@@ -9,6 +9,8 @@ public class AssetHealthDto {
     private Map<String, Double> factors;
     private BigDecimal currentDepreciatedValue;
     private String projectedReplacementDate;
+    private String appliedPolicyName;
+    private Map<String, Integer> appliedWeights;
 
     public AssetHealthDto() {}
 
@@ -50,5 +52,21 @@ public class AssetHealthDto {
 
     public void setProjectedReplacementDate(String projectedReplacementDate) {
         this.projectedReplacementDate = projectedReplacementDate;
+    }
+
+    public String getAppliedPolicyName() {
+        return appliedPolicyName;
+    }
+
+    public void setAppliedPolicyName(String appliedPolicyName) {
+        this.appliedPolicyName = appliedPolicyName;
+    }
+
+    public Map<String, Integer> getAppliedWeights() {
+        return appliedWeights;
+    }
+
+    public void setAppliedWeights(Map<String, Integer> appliedWeights) {
+        this.appliedWeights = appliedWeights;
     }
 }

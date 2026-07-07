@@ -9,22 +9,29 @@ public class CategoryResponse {
     private String code;
     private String name;
     private String description;
+    private Integer defaultUsefulLifeMonths;
+    private UUID scoringPolicyId;
+    private String scoringPolicyName;
+    private ScoringPolicyResponse scoringPolicy;
     private Map<String, Object> specificationSchema;
     private Boolean isActive;
     private Instant createdAt;
     private Instant updatedAt;
 
-    public CategoryResponse(UUID id, String code, String name, String description, Map<String, Object> specificationSchema, Boolean isActive, Instant createdAt, Instant updatedAt) {
+    public CategoryResponse() {
+    }
+
+    public CategoryResponse(UUID id, String code, String name, String description, Integer defaultUsefulLifeMonths, Map<String, Object> specificationSchema, Boolean isActive, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.code = code;
         this.name = name;
         this.description = description;
+        this.defaultUsefulLifeMonths = defaultUsefulLifeMonths;
         this.specificationSchema = specificationSchema;
         this.isActive = isActive;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
 
     public UUID getId() {
         return id;
@@ -56,6 +63,38 @@ public class CategoryResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getDefaultUsefulLifeMonths() {
+        return defaultUsefulLifeMonths;
+    }
+
+    public void setDefaultUsefulLifeMonths(Integer defaultUsefulLifeMonths) {
+        this.defaultUsefulLifeMonths = defaultUsefulLifeMonths;
+    }
+
+    public UUID getScoringPolicyId() {
+        return scoringPolicyId;
+    }
+
+    public void setScoringPolicyId(UUID scoringPolicyId) {
+        this.scoringPolicyId = scoringPolicyId;
+    }
+
+    public String getScoringPolicyName() {
+        return scoringPolicyName;
+    }
+
+    public void setScoringPolicyName(String scoringPolicyName) {
+        this.scoringPolicyName = scoringPolicyName;
+    }
+
+    public ScoringPolicyResponse getScoringPolicy() {
+        return scoringPolicy;
+    }
+
+    public void setScoringPolicy(ScoringPolicyResponse scoringPolicy) {
+        this.scoringPolicy = scoringPolicy;
     }
 
     public Map<String, Object> getSpecificationSchema() {

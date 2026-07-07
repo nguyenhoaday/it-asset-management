@@ -1,54 +1,61 @@
 package com.nguyenhoa.itam.asset.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "categories")
-public class Category {
+@Table(name = "scoring_policies")
+public class ScoringPolicy {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @ColumnDefault("uuid_generate_v4()")
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Size(max = 50)
-    @NotNull
-    @Column(name = "code", nullable = false, length = 50)
-    private String code;
-
     @Size(max = 255)
     @NotNull
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
 
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @Column(name = "default_useful_life_months")
-    private Integer defaultUsefulLifeMonths;
+    @NotNull
+    @Min(0)
+    @Max(100)
+    @Column(name = "weight_age", nullable = false)
+    private Integer weightAge = 30;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "scoring_policy_id")
-    private ScoringPolicy scoringPolicy;
+    @NotNull
+    @Min(0)
+    @Max(100)
+    @Column(name = "weight_warranty", nullable = false)
+    private Integer weightWarranty = 20;
 
-    @Column(name = "specification_schema")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private Map<String, Object> specificationSchema;
+    @NotNull
+    @Min(0)
+    @Max(100)
+    @Column(name = "weight_incident", nullable = false)
+    private Integer weightIncident = 30;
 
-    @ColumnDefault("true")
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @NotNull
+    @Min(0)
+    @Max(100)
+    @Column(name = "weight_condition", nullable = false)
+    private Integer weightCondition = 20;
+
+    @ColumnDefault("false")
+    @Column(name = "is_default")
+    private Boolean isDefault = false;
 
     @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
@@ -60,20 +67,15 @@ public class Category {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    public ScoringPolicy() {
+    }
+
     public UUID getId() {
         return id;
     }
 
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     public String getName() {
@@ -92,28 +94,44 @@ public class Category {
         this.description = description;
     }
 
-    public Integer getDefaultUsefulLifeMonths() {
-        return defaultUsefulLifeMonths;
+    public Integer getWeightAge() {
+        return weightAge;
     }
 
-    public void setDefaultUsefulLifeMonths(Integer defaultUsefulLifeMonths) {
-        this.defaultUsefulLifeMonths = defaultUsefulLifeMonths;
+    public void setWeightAge(Integer weightAge) {
+        this.weightAge = weightAge;
     }
 
-    public Map<String, Object> getSpecificationSchema() {
-        return specificationSchema;
+    public Integer getWeightWarranty() {
+        return weightWarranty;
     }
 
-    public void setSpecificationSchema(Map<String, Object> specificationSchema) {
-        this.specificationSchema = specificationSchema;
+    public void setWeightWarranty(Integer weightWarranty) {
+        this.weightWarranty = weightWarranty;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public Integer getWeightIncident() {
+        return weightIncident;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setWeightIncident(Integer weightIncident) {
+        this.weightIncident = weightIncident;
+    }
+
+    public Integer getWeightCondition() {
+        return weightCondition;
+    }
+
+    public void setWeightCondition(Integer weightCondition) {
+        this.weightCondition = weightCondition;
+    }
+
+    public Boolean getIsDefault() {
+        return isDefault;
+    }
+
+    public void setIsDefault(Boolean isDefault) {
+        this.isDefault = isDefault;
     }
 
     public Instant getCreatedAt() {
@@ -130,13 +148,5 @@ public class Category {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public ScoringPolicy getScoringPolicy() {
-        return scoringPolicy;
-    }
-
-    public void setScoringPolicy(ScoringPolicy scoringPolicy) {
-        this.scoringPolicy = scoringPolicy;
     }
 }

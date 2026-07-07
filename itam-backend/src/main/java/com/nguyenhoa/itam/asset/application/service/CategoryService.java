@@ -2,10 +2,14 @@ package com.nguyenhoa.itam.asset.application.service;
 
 import com.nguyenhoa.itam.asset.application.dto.CategoryRequest;
 import com.nguyenhoa.itam.asset.application.dto.CategoryResponse;
+import com.nguyenhoa.itam.asset.application.dto.ScoringPolicyResponse;
 import com.nguyenhoa.itam.asset.domain.AssetRepository;
 import com.nguyenhoa.itam.asset.domain.Category;
 import com.nguyenhoa.itam.asset.domain.CategoryRepository;
+import com.nguyenhoa.itam.asset.domain.ScoringPolicy;
+import com.nguyenhoa.itam.asset.domain.ScoringPolicyRepository;
 import com.nguyenhoa.itam.common.exception.BusinessException;
+import com.nguyenhoa.itam.common.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,11 +23,12 @@ import java.util.stream.Collectors;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final AssetRepository assetRepository;
+    private final ScoringPolicyRepository scoringPolicyRepository;
 
-
-    public CategoryService(CategoryRepository categoryRepository, AssetRepository assetRepository) {
+    public CategoryService(CategoryRepository categoryRepository, AssetRepository assetRepository, ScoringPolicyRepository scoringPolicyRepository) {
         this.categoryRepository = categoryRepository;
         this.assetRepository = assetRepository;
+        this.scoringPolicyRepository = scoringPolicyRepository;
     }
 
     @Transactional(readOnly = true)
@@ -42,8 +47,17 @@ public class CategoryService {
         category.setCode(request.getCode().toUpperCase().trim());
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+        category.setDefaultUsefulLifeMonths(request.getDefaultUsefulLifeMonths());
         category.setSpecificationSchema(request.getSpecificationSchema());
         category.setIsActive(request.getActive() != null ? request.getActive() : true);
+
+        if (request.getScoringPolicyId() != null) {
+            ScoringPolicy policy = scoringPolicyRepository.findById(request.getScoringPolicyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chính sách chấm điểm"));
+            category.setScoringPolicy(policy);
+        } else {
+            category.setScoringPolicy(scoringPolicyRepository.findByIsDefaultTrue().orElse(null));
+        }
 
         Category savedCategory = categoryRepository.save(category);
         return mapToResponse(savedCategory);
@@ -67,8 +81,17 @@ public class CategoryService {
         category.setCode(newCode);
         category.setName(request.getName().trim());
         category.setDescription(request.getDescription());
+        category.setDefaultUsefulLifeMonths(request.getDefaultUsefulLifeMonths());
         category.setSpecificationSchema(request.getSpecificationSchema());
         category.setIsActive(request.getActive() != null ? request.getActive() : true);
+
+        if (request.getScoringPolicyId() != null) {
+            ScoringPolicy policy = scoringPolicyRepository.findById(request.getScoringPolicyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chính sách chấm điểm"));
+            category.setScoringPolicy(policy);
+        } else {
+            category.setScoringPolicy(null);
+        }
 
         Category updatedCategory  = categoryRepository.save(category);
         return mapToResponse(updatedCategory);
@@ -89,15 +112,22 @@ public class CategoryService {
     }
 
     private CategoryResponse mapToResponse(Category category) {
-        return new CategoryResponse(
+        CategoryResponse res = new CategoryResponse(
                 category.getId(),
                 category.getCode(),
                 category.getName(),
                 category.getDescription(),
+                category.getDefaultUsefulLifeMonths(),
                 category.getSpecificationSchema(),
                 category.getIsActive(),
                 category.getCreatedAt(),
                 category.getUpdatedAt()
         );
+        if (category.getScoringPolicy() != null) {
+            res.setScoringPolicyId(category.getScoringPolicy().getId());
+            res.setScoringPolicyName(category.getScoringPolicy().getName());
+            res.setScoringPolicy(ScoringPolicyResponse.fromEntity(category.getScoringPolicy()));
+        }
+        return res;
     }
 }

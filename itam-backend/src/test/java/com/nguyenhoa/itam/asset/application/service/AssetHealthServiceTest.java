@@ -4,6 +4,9 @@ import com.nguyenhoa.itam.asset.application.dto.AssetHealthDto;
 import com.nguyenhoa.itam.asset.domain.Asset;
 import com.nguyenhoa.itam.asset.domain.AssetRepository;
 import com.nguyenhoa.itam.asset.domain.AssetStatus;
+import com.nguyenhoa.itam.asset.domain.Category;
+import com.nguyenhoa.itam.asset.domain.ScoringPolicy;
+import com.nguyenhoa.itam.asset.domain.ScoringPolicyRepository;
 import com.nguyenhoa.itam.maintenance.application.service.MaintenanceService;
 import com.nguyenhoa.itam.systemconfig.application.service.SystemConfigService;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +38,9 @@ class AssetHealthServiceTest {
 
     @Mock
     private SystemConfigService systemConfigService;
+
+    @Mock
+    private ScoringPolicyRepository scoringPolicyRepository;
 
     @InjectMocks
     private AssetHealthService assetHealthService;
@@ -91,5 +97,46 @@ class AssetHealthServiceTest {
         assertNotNull(result);
         assertTrue(result.getFinalScore() < 70.0, "Điểm sức khỏe phải giảm khi hết bảo hành và sửa nhiều lần");
         assertEquals(0.0, result.getFactors().get("warrantyFactor"), "Điểm bảo hành phải bằng 0");
+    }
+
+    @Test
+    @DisplayName("Sử dụng chính sách chấm điểm từ Category khi có cấu hình")
+    void testCalculateHealth_WithCategoryScoringPolicy_UsesPolicyWeights() {
+        Category category = new Category();
+        category.setCode("LAPTOP");
+        ScoringPolicy policy = new ScoringPolicy();
+        policy.setName("Chính sách Laptop");
+        policy.setWeightAge(50);
+        policy.setWeightWarranty(10);
+        policy.setWeightIncident(20);
+        policy.setWeightCondition(20);
+        category.setScoringPolicy(policy);
+        asset.setCategory(category);
+
+        when(assetRepository.findByIdAndDeletedAtIsNull(assetId)).thenReturn(Optional.of(asset));
+        when(systemConfigService.getConfigInt(eq("asset_lifecycle_months"), anyInt())).thenReturn(60);
+        when(maintenanceService.getMaintenanceCountByAsset(assetId)).thenReturn(0L);
+
+        AssetHealthDto result = assetHealthService.calculateHealth(assetId);
+        assertNotNull(result);
+        assertEquals("Chính sách Laptop", result.getAppliedPolicyName());
+        assertEquals(50, result.getAppliedWeights().get("age"));
+    }
+
+    @Test
+    @DisplayName("Loại trừ phần mềm ra khỏi tính điểm sức khỏe")
+    void testCalculateHealth_SoftwareCategory_ReturnsExcluded() {
+        Category category = new Category();
+        category.setCode("SOFTWARE");
+        category.setName("Phần mềm & Giấy phép");
+        asset.setCategory(category);
+
+        when(assetRepository.findByIdAndDeletedAtIsNull(assetId)).thenReturn(Optional.of(asset));
+
+        AssetHealthDto result = assetHealthService.calculateHealth(assetId);
+        assertNotNull(result);
+        assertEquals(100.0, result.getFinalScore());
+        assertEquals("GOOD", result.getHealthCondition());
+        assertEquals("Không áp dụng (Phần mềm / Giấy phép)", result.getAppliedPolicyName());
     }
 }

@@ -62,6 +62,9 @@ public class Asset {
     @Column(name = "warranty_expiry")
     private LocalDate warrantyExpiry;
 
+    @Column(name = "useful_life_months")
+    private Integer usefulLifeMonths;
+
     @Enumerated(EnumType.STRING)
     @NotNull
     @ColumnDefault("'AVAILABLE'")
@@ -158,6 +161,14 @@ public class Asset {
 
     public void setWarrantyExpiry(LocalDate warrantyExpiry) {
         this.warrantyExpiry = warrantyExpiry;
+    }
+
+    public Integer getUsefulLifeMonths() {
+        return usefulLifeMonths;
+    }
+
+    public void setUsefulLifeMonths(Integer usefulLifeMonths) {
+        this.usefulLifeMonths = usefulLifeMonths;
     }
 
     public AssetStatus getStatus() {

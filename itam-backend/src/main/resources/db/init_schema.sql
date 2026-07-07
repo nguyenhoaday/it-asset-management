@@ -30,7 +30,6 @@ CREATE TABLE user_infos
     user_id       UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     full_name     VARCHAR(100) NOT NULL,
     department_id UUID REFERENCES departments(id),
-    care_score    INT DEFAULT 100,
     created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -47,17 +46,35 @@ CREATE TABLE refresh_tokens
 
 CREATE INDEX idx_refresh_token_revoked ON refresh_tokens(user_id, is_revoked);
 
--- 3. CATEGORIES
+-- 3. SCORING POLICIES
+CREATE TABLE scoring_policies
+(
+    id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name             VARCHAR(255) UNIQUE NOT NULL,
+    description      TEXT,
+    weight_age       INT NOT NULL DEFAULT 30,
+    weight_warranty  INT NOT NULL DEFAULT 20,
+    weight_incident  INT NOT NULL DEFAULT 30,
+    weight_condition INT NOT NULL DEFAULT 20,
+    is_default       BOOLEAN DEFAULT FALSE,
+    created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_weights_sum CHECK ((weight_age + weight_warranty + weight_incident + weight_condition) = 100)
+);
+
+-- 4. CATEGORIES
 CREATE TABLE categories
 (
-    id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    code                 VARCHAR(50) UNIQUE NOT NULL,
-    name                 VARCHAR(255) NOT NULL,
-    description          TEXT,
-    specification_schema JSONB,
-    is_active            BOOLEAN DEFAULT TRUE,
-    created_at           TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at           TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    id                         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code                       VARCHAR(50) UNIQUE NOT NULL,
+    name                       VARCHAR(255) NOT NULL,
+    description                TEXT,
+    default_useful_life_months INT,
+    scoring_policy_id          UUID REFERENCES scoring_policies(id) ON DELETE SET NULL,
+    specification_schema       JSONB,
+    is_active                  BOOLEAN DEFAULT TRUE,
+    created_at                 TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at                 TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. ASSETS
@@ -73,6 +90,7 @@ CREATE TABLE assets
     currency             VARCHAR(3) NOT NULL DEFAULT 'VND',
     purchase_invoice_url VARCHAR(255),
     warranty_expiry      DATE,
+    useful_life_months   INT,
     status               VARCHAR(50) NOT NULL DEFAULT 'AVAILABLE'
         CHECK (status IN ('AVAILABLE','ASSIGNED','MAINTENANCE','LOST','BROKEN','PENDING_CONFIRMATION','RETIRED')),
     specification        JSONB,
@@ -207,6 +225,8 @@ CREATE TABLE audit_logs
     entity_type  VARCHAR(50) NOT NULL,
     entity_id    UUID NOT NULL,
     payload_diff JSONB NOT NULL,
+    ip_address   VARCHAR(50),
+    user_agent   VARCHAR(500),
     created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -262,7 +282,6 @@ CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX idx_audit_created ON audit_logs(created_at);
 
 CREATE INDEX idx_user_infos_department ON user_infos(department_id);
-CREATE INDEX idx_user_infos_care_score ON user_infos(care_score DESC);
 
 CREATE INDEX idx_license_allocations_license ON license_allocations(license_id);
 CREATE INDEX idx_license_allocations_user ON license_allocations(user_id);
@@ -330,6 +349,8 @@ END;
 
 
 CREATE TRIGGER trg_departments_updated_at BEFORE UPDATE ON departments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_scoring_policies_updated_at BEFORE UPDATE ON scoring_policies
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trg_categories_updated_at BEFORE UPDATE ON categories
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

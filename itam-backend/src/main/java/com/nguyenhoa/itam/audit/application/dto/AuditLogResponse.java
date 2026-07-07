@@ -13,11 +13,13 @@ public class AuditLogResponse {
     private String entityType;
     private UUID entityId;
     private Map<String, Object> payloadDiff;
+    private String ipAddress;
+    private String userAgent;
     private Instant createdAt;
 
     public AuditLogResponse(UUID id, UUID userId, String username, String userFullName,
                             String action, String entityType, UUID entityId,
-                            Map<String, Object> payloadDiff, Instant createdAt) {
+                            Map<String, Object> payloadDiff, String ipAddress, String userAgent, Instant createdAt) {
         this.id = id;
         this.userId = userId;
         this.username = username;
@@ -26,6 +28,8 @@ public class AuditLogResponse {
         this.entityType = entityType;
         this.entityId = entityId;
         this.payloadDiff = payloadDiff;
+        this.ipAddress = ipAddress;
+        this.userAgent = userAgent;
         this.createdAt = createdAt;
     }
 
@@ -91,6 +95,22 @@ public class AuditLogResponse {
 
     public void setPayloadDiff(Map<String, Object> payloadDiff) {
         this.payloadDiff = payloadDiff;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
     }
 
     public Instant getCreatedAt() {

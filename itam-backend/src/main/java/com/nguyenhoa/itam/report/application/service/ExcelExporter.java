@@ -2,6 +2,7 @@ package com.nguyenhoa.itam.report.application.service;
 
 import com.nguyenhoa.itam.asset.application.dto.AssetResponse;
 import com.nguyenhoa.itam.allocation.application.dto.AllocationResponse;
+import com.nguyenhoa.itam.audit.application.dto.AuditLogResponse;
 import com.nguyenhoa.itam.inventory.application.dto.InventorySessionResponse;
 import com.nguyenhoa.itam.inventory.application.dto.InventoryItemResponse;
 import org.apache.poi.ss.usermodel.*;
@@ -236,6 +237,49 @@ public class ExcelExporter {
                 sheet.autoSizeColumn(i);
             }
 
+            workbook.write(out);
+        }
+    }
+
+    public void exportAuditLogs(List<AuditLogResponse> logs, String lang, OutputStream out) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            boolean isEn = "en".equalsIgnoreCase(lang);
+            String sheetName = isEn ? "Audit Logs" : "Nhật ký kiểm toán";
+            Sheet sheet = workbook.createSheet(sheetName);
+            CellStyle headerStyle = createHeaderStyle(workbook);
+
+            // Header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers;
+            if (isEn) {
+                headers = new String[]{"ID", "Performer", "Username", "Action", "Entity Type", "Entity ID", "IP Address", "User Agent", "Details", "Timestamp"};
+            } else {
+                headers = new String[]{"ID", "Người thực hiện", "Username", "Hành động", "Đối tượng", "ID Đối tượng", "IP Address", "User Agent", "Chi tiết", "Thời gian"};
+            }
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Data rows
+            int rowNum = 1;
+            for (AuditLogResponse log : logs) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(sanitize(log.getId()));
+                row.createCell(1).setCellValue(sanitize(log.getUserFullName()));
+                row.createCell(2).setCellValue(sanitize(log.getUsername()));
+                row.createCell(3).setCellValue(sanitize(log.getAction()));
+                row.createCell(4).setCellValue(sanitize(log.getEntityType()));
+                row.createCell(5).setCellValue(sanitize(log.getEntityId()));
+                row.createCell(6).setCellValue(sanitize(log.getIpAddress()));
+                row.createCell(7).setCellValue(sanitize(log.getUserAgent()));
+                String details = log.getPayloadDiff() != null && !log.getPayloadDiff().isEmpty() ? log.getPayloadDiff().toString() : "";
+                row.createCell(8).setCellValue(sanitize(details));
+                row.createCell(9).setCellValue(log.getCreatedAt() != null ? DATE_FORMATTER.format(log.getCreatedAt()) : "");
+            }
+
+            for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
             workbook.write(out);
         }
     }

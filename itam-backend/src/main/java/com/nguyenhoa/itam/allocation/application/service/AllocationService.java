@@ -78,13 +78,9 @@ public class AllocationService {
 
         assetService.markAssetAsPending(request.getAssetId());
 
-        auditLogService.log(
-                createdBy,
-                "ALLOCATE",
-                "ASSET",
-                request.getAssetId(),
-                java.util.Map.of("toUser", request.getToUserId().toString(), "notes", request.getNotes() != null ? request.getNotes() : "")
-        );
+        auditLogService.log(createdBy, "ALLOCATE", "ALLOCATION", savedAllocation.getId(), 
+            java.util.Map.of("assetId", request.getAssetId(), "toUserId", request.getToUserId(), "status", "PENDING_CONFIRMATION"));
+
 
         // Gửi thông báo in-app cho nhân viên (không gửi email)
         try {
@@ -121,9 +117,9 @@ public class AllocationService {
         auditLogService.log(
                 createdBy,
                 "RETURN",
-                "ASSET",
-                assetId,
-                java.util.Map.of("fromUser", fromUserId != null ? fromUserId.toString() : "", "notes", notes != null ? notes : "")
+                "ALLOCATION",
+                savedAllocation.getId(),
+                java.util.Map.of("status", "RETURNED", "note", notes != null ? notes : "")
         );
 
         return mapToResponse(savedAllocation);
@@ -205,15 +201,10 @@ public class AllocationService {
         auditLogService.log(
                 userId,
                 "CONFIRM",
-                "ASSET",
-                allocation.getAsset(),
-                java.util.Map.of("allocationId", allocation.getId().toString())
+                "ALLOCATION",
+                allocationId,
+                java.util.Map.of("status", "ASSIGNED")
         );
-
-        // Thưởng điểm Care Score cho nhân viên khi xác nhận bàn giao đúng hạn
-        try {
-            userService.addCareScore(userId, 5);
-        } catch (Exception ignored) {}
 
         // Gửi thông báo in-app cho admin (không gửi email)
         try {
@@ -261,11 +252,6 @@ public class AllocationService {
                 allocation.getAsset(),
                 java.util.Map.of("allocationId", allocation.getId().toString())
         );
-
-        // Trừ điểm Care Score của nhân viên khi từ chối nhận thiết bị
-        try {
-            userService.addCareScore(userId, -5);
-        } catch (Exception ignored) {}
 
         // Gửi thông báo in-app cho admin (không gửi email)
         try {

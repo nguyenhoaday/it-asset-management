@@ -49,14 +49,6 @@ public class MaintenanceService {
                     HttpStatus.CONFLICT);
         }
 
-        // Nếu thiết bị đang do nhân viên nắm giữ, trừ điểm Care Score vì làm hỏng/gặp sự cố
-        UUID currentHolderId = assetService.getAssetCurrentHolderId(assetId);
-        if (currentHolderId != null) {
-            try {
-                userService.addCareScore(currentHolderId, -10);
-            } catch (Exception ignored) {}
-        }
-
         MaintenanceLog maintenanceLog = new MaintenanceLog();
         maintenanceLog.setAsset(assetId);
         maintenanceLog.setHandledBy(createdBy); // Người chịu trách nhiệm ban đầu

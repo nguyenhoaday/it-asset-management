@@ -12,6 +12,7 @@ import com.nguyenhoa.itam.license.application.service.SoftwareLicenseService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +38,7 @@ public class SoftwareLicenseController {
                                                                                           @RequestParam(required = false) String status,
                                                                                           @RequestParam(defaultValue = "0") int page,
                                                                                           @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         PageResponse<SoftwareLicenseResponse> response = softwareLicenseService.getLicenses(search, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

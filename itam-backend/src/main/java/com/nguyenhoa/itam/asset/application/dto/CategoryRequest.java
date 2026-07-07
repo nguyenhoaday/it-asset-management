@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class CategoryRequest {
     @NotBlank(message = "Mã danh mục không được để trống")
@@ -15,6 +16,8 @@ public class CategoryRequest {
     private String name;
 
     private String description;
+    private Integer defaultUsefulLifeMonths;
+    private UUID scoringPolicyId;
     private Map<String, Object> specificationSchema;
     private Boolean isActive = true;
 
@@ -40,6 +43,22 @@ public class CategoryRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getDefaultUsefulLifeMonths() {
+        return defaultUsefulLifeMonths;
+    }
+
+    public void setDefaultUsefulLifeMonths(Integer defaultUsefulLifeMonths) {
+        this.defaultUsefulLifeMonths = defaultUsefulLifeMonths;
+    }
+
+    public UUID getScoringPolicyId() {
+        return scoringPolicyId;
+    }
+
+    public void setScoringPolicyId(UUID scoringPolicyId) {
+        this.scoringPolicyId = scoringPolicyId;
     }
 
     public Map<String, Object> getSpecificationSchema() {

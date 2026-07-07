@@ -43,6 +43,12 @@ public class AuditLog {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> payloadDiff;
 
+    @Column(name = "ip_address", length = 50)
+    private String ipAddress;
+
+    @Column(name = "user_agent", length = 500)
+    private String userAgent;
+
     @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
@@ -64,36 +70,52 @@ public class AuditLog {
         this.user = user;
     }
 
-    public String getAction() {
+    public @Size(max = 50) @NotNull String getAction() {
         return action;
     }
 
-    public void setAction(String action) {
+    public void setAction(@Size(max = 50) @NotNull String action) {
         this.action = action;
     }
 
-    public String getEntityType() {
+    public @Size(max = 50) @NotNull String getEntityType() {
         return entityType;
     }
 
-    public void setEntityType(String entityType) {
+    public void setEntityType(@Size(max = 50) @NotNull String entityType) {
         this.entityType = entityType;
     }
 
-    public UUID getEntityId() {
+    public @NotNull UUID getEntityId() {
         return entityId;
     }
 
-    public void setEntityId(UUID entityId) {
+    public void setEntityId(@NotNull UUID entityId) {
         this.entityId = entityId;
     }
 
-    public Map<String, Object> getPayloadDiff() {
+    public @NotNull Map<String, Object> getPayloadDiff() {
         return payloadDiff;
     }
 
-    public void setPayloadDiff(Map<String, Object> payloadDiff) {
+    public void setPayloadDiff(@NotNull Map<String, Object> payloadDiff) {
         this.payloadDiff = payloadDiff;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
     }
 
     public Instant getCreatedAt() {
@@ -103,5 +125,4 @@ public class AuditLog {
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
-
 }
