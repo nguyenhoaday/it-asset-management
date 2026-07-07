@@ -195,8 +195,7 @@ public class UserService {
                 userInfo.getFullName(),
                 user.getRole().name(),
                 userInfo.getDepartment() != null ? userInfo.getDepartment().getName() : null,
-                user.getIsActive(),
-                userInfo.getCareScore()
+                user.getIsActive()
         );
     }
 
@@ -231,24 +230,6 @@ public class UserService {
         return tempPassword;
     }
 
-    @Transactional
-    public void addCareScore(UUID userId, int points) {
-        userInfoRepository.findById(userId).ifPresent(userInfo -> {
-            int currentScore = userInfo.getCareScore() != null ? userInfo.getCareScore() : 100;
-            int newScore = Math.max(0, Math.min(100, currentScore + points));
-            userInfo.setCareScore(newScore);
-            userInfoRepository.save(userInfo);
-        });
-    }
-
-    @Transactional(readOnly = true)
-    public java.util.List<UserProfileResponse> getLeaderboard() {
-        return userInfoRepository.findTop5ByOrderByCareScoreDesc()
-                .stream()
-                .map(this::mapToProfileResponse)
-                .toList();
-    }
-
     private UserProfileResponse mapToProfileResponse(UserInfo userInfo) {
         return new UserProfileResponse(
                 userInfo.getUser().getId(),
@@ -257,8 +238,7 @@ public class UserService {
                 userInfo.getFullName(),
                 userInfo.getUser().getRole().name(),
                 userInfo.getDepartment() != null ? userInfo.getDepartment().getName() : null,
-                userInfo.getUser().getIsActive(),
-                userInfo.getCareScore()
+                userInfo.getUser().getIsActive()
         );
     }
     private java.util.Map<String, String> createDiffMap(Object oldVal, Object newVal) {

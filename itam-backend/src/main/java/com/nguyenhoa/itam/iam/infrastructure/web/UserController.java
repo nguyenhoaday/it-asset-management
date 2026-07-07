@@ -79,9 +79,4 @@ public class UserController {
         String tempPassword = userService.resetPasswordByAdmin(id, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success(tempPassword));
     }
-
-    @GetMapping("/leaderboard")
-    public ResponseEntity<ApiResponse<java.util.List<UserProfileResponse>>> getLeaderboard() {
-        return ResponseEntity.ok(ApiResponse.success(userService.getLeaderboard()));
-    }
 }

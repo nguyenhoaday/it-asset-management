@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, Plus, Search, X, ChevronLeft, ChevronRight, Mail, ShieldAlert, KeyRound, Building, Edit2, CheckCircle2, XCircle, Copy, Check, Star, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Users, Plus, Search, X, ChevronLeft, ChevronRight, Mail, ShieldAlert, KeyRound, Building, Edit2, CheckCircle2, XCircle, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import axiosClient from '../services/axiosClient';
 import { useToast } from '../context/ToastContext';
 
@@ -347,17 +347,6 @@ const UserManagementPage = () => {
                       <th className="px-6 py-4">{t('users.role')}</th>
                       <th className="px-6 py-4">{t('users.department')}</th>
                       <th className="px-6 py-4">{t('users.isActive')}</th>
-                      <th 
-                        className="px-6 py-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                        onClick={() => handleSort('ui.careScore')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          {t('users.careScore')}
-                          {sortBy === 'ui.careScore' ? (
-                            sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 text-indigo-500" /> : <ArrowDown className="w-4 h-4 text-indigo-500" />
-                          ) : <ArrowUpDown className="w-4 h-4 opacity-50" />}
-                        </div>
-                      </th>
                       <th className="px-6 py-4 text-right"></th>
                     </tr>
                   </thead>
@@ -388,14 +377,6 @@ const UserManagementPage = () => {
                         <td className="px-6 py-4">
                           {getStatusBadge(user.isActive)}
                         </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 dark:bg-amber-500/10 rounded-full">
-                            <Star className="w-3.5 h-3.5 text-amber-500" fill="currentColor" />
-                            <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                              {user.careScore ?? 100}
-                            </span>
-                          </div>
-                        </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button
@@ -418,7 +399,7 @@ const UserManagementPage = () => {
                     ))}
                     {users.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                           {t('users.noData')}
                         </td>
                       </tr>
